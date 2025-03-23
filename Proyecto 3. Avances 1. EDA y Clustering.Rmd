@@ -471,3 +471,43 @@ for (archivo in archivos) {
 }
 ```
 
+## d.	Realicen gráficos exploratorios que les dé ideas del estado de los datos.
+
+```{r}
+
+```
+
+
+## e.	Hagan un agrupamiento “clustering” e interpreten los resultados. 
+
+```{r}
+
+```
+
+
+### 2. Una vez hayan explorado los datos...
+
+## a.	Describan la situación problemática que los lleva a plantear un problema a resolver.
+
+```{r}
+
+```
+
+## b.	Enuncien un problema científico y unos objetivos preliminares.
+
+```{r}
+
+```
+
+## c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
+
+```{r}
+
+```
+
+## d.	Escriban unas conclusiones con los hallazgos encontrados durante el análisis exploratorio. 
+
+```{r}
+
+```
+
