@@ -1,0 +1,473 @@
+---
+title: "Proyecto 3. Avances 1. Eda y Clustering"
+author: 
+  - "Pablo Daniel Barillas Moreno, Carné No. 22193"
+  - "Mathew Cordero Aquino, Carné No. 22982"
+output:
+  pdf_document:
+    latex_engine: xelatex
+  html_document: default
+date: "2025-03-14"
+header-includes:
+   - \usepackage{fvextra}
+   - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+repository: "https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git"
+---
+
+### Enlace al Repositorio del proyecto 3 de minería de datos del Grupo #1
+[Repositorio en GitHub](https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git)
+
+### 0. Descargar los conjuntos de datos.
+
+Para este punto ya se descargo año por año el .sav (formato SPSS) de la página [Instituto Nacional de Estadística - Guatemala](https://www.ine.gob.gt/vitales/), de nacimiento de bebes del país (Guatemala), para su posterior análisis.
+
+```{r}
+# Importar librerías necesarias
+library(haven)
+library(dplyr)
+
+# Ruta de la carpeta con los archivos .sav
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Leer y resumir cada archivo
+resumen <- lapply(archivos, function(archivo) {
+  tryCatch({
+    datos <- read_sav(archivo)
+    list(
+      archivo = basename(archivo),
+      observaciones = nrow(datos),
+      variables = ncol(datos),
+      columnas = names(datos)
+    )
+  }, error = function(e) {
+    list(
+      archivo = basename(archivo),
+      error = as.character(e)
+    )
+  })
+})
+
+# Mostrar resumen
+print(resumen)
+
+```
+---
+Para este análisis se utilizaron los registros de nacimientos publicados por el Instituto Nacional de Estadística (INE) desde el año 2009 hasta 2022, en formato .sav (SPSS). En total, se procesaron 14 archivos, cada uno correspondiente a un año.
+
+Cada archivo contiene datos individuales de nacimientos ocurridos en el país, con variables sobre el menor, la madre, el padre y condiciones del nacimiento.
+
+### 1. Exploren los datos para encontrar preguntas interesantes y guías de investigación. Para esto: 
+
+## a.	Describan el conjunto de datos: cuantas variables y observaciones hay y el tipo de cada una de las variables.
+
+```{r}
+# Importar librerías necesarias
+library(haven)
+library(dplyr)
+
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Crear lista vacía para resumen
+resumen_general <- list()
+
+for (archivo in archivos) {
+  cat("📁 Procesando:", basename(archivo), "\n")
+  tryCatch({
+    df <- read_sav(archivo)
+    
+    resumen <- tibble(
+      archivo = basename(archivo),
+      observaciones = nrow(df),
+      variables = ncol(df),
+      columnas = paste(names(df), collapse = ", ")
+    )
+    
+    resumen_general[[archivo]] <- resumen
+    
+    rm(df)  # Liberar memoria
+    gc()
+  }, error = function(e) {
+    message("❌ Error leyendo ", basename(archivo))
+  })
+}
+
+# Unir resumen de todos los archivos
+resumen_final <- bind_rows(resumen_general)
+
+# Mostrar resultado
+print(resumen_final)
+```
+---
+
+**Descripción General del Conjunto de Datos**
+
+Para este análisis se utilizaron los registros de nacimientos publicados por el Instituto Nacional de Estadística (INE) desde el año **2009 hasta 2022**, en formato `.sav` (SPSS). En total, se procesaron **14 archivos**, cada uno correspondiente a un año.
+
+Cada archivo contiene datos individuales de nacimientos ocurridos en el país, con variables sobre el menor, la madre, el padre y condiciones del nacimiento.
+
+**Resumen por año:**
+
+| Año  | Observaciones  | Variables |
+|------|----------------|-----------|
+| 2009 | 351,628        | 37        |
+| 2010 | 361,906        | 39        |
+| 2011 | 373,692        | 39        |
+| 2012 | 388,613        | 41        |
+| 2013 | 387,342        | 41        |
+| 2014 | 386,195        | 39        |
+| 2015 | 391,425        | 42        |
+| 2016 | 390,382        | 42        |
+| 2017 | 381,664        | 42        |
+| 2018 | 383,263        | 42        |
+| 2019 | 366,855        | 42        |
+| 2020 | 341,212        | 42        |
+| 2021 | 345,149        | 42        |
+| 2022 | 345,869        | 42        |
+
+**Totales:**
+
+- **Total de observaciones:** 5,048,195
+- **Variables mínimas por año:** 37
+- **Variables máximas por año:** 42
+
+> Algunas variables tienen nombres distintos en ciertos años, pero representan la misma información. Se estandarizarán para el análisis posterior. Cuando una variable no está presente en todos los años, se conservará con valores `NA` según corresponda.
+
+---
+
+```{r}
+# Importar librerías necesarias
+library(haven)
+library(dplyr)
+library(purrr)
+
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+resumen_variables <- list()
+
+for (archivo in archivos) {
+  cat("📁 Procesando:", basename(archivo), "\n")
+  tryCatch({
+    df <- read_sav(archivo)
+
+    # Verifica que el data frame tenga nombres de columna válidos
+    if (!is.null(names(df))) {
+      resumen <- tibble(
+        archivo = basename(archivo),
+        variable = names(df),
+        tipo = sapply(df, function(x) class(x)[1]),
+        ejemplo = sapply(df, function(x) as.character(x[1]))
+      )
+      resumen_variables[[archivo]] <- resumen
+    } else {
+      message("⚠️ Sin nombres de columnas: ", basename(archivo))
+    }
+
+    rm(df)
+    gc()
+  }, error = function(e) {
+    message("❌ Error con ", basename(archivo), ": ", e$message)
+  })
+}
+
+# Unir resultados válidos
+resumen_total <- bind_rows(resumen_variables)
+
+# Crear resumen por variable
+resumen_por_variable <- resumen_total %>%
+  group_by(variable) %>%
+  summarise(
+    tipo_mas_frecuente = names(sort(table(tipo), decreasing = TRUE))[1],
+    ejemplo = first(na.omit(ejemplo)),
+    aparece_en = n_distinct(archivo),
+    .groups = "drop"
+  ) %>%
+  arrange(desc(aparece_en))
+
+# Mostrar resultado
+print(resumen_por_variable)
+```
+
+---
+
+**1.a. Descripción del conjunto de datos**
+
+El conjunto de datos corresponde a los registros de nacimientos recopilados por el Instituto Nacional de Estadística (INE) de Guatemala, desde el año **2009 hasta 2022**, en formato `.sav` (SPSS). Cada archivo representa un año y contiene información detallada sobre cada nacimiento ocurrido en el país.
+
+---
+
+**Contenido general:**
+
+- **Años analizados:** 14 (2009 a 2022)
+- **Total de observaciones:** 5,048,195 nacimientos
+- **Cantidad de variables por año:** entre **37 y 42**
+
+---
+
+**Variables principales y tipos**
+
+A continuación se muestra una clasificación de los tipos de variables más comunes en los archivos:
+
+|**Tipo de Variable**           |**Ejemplos de variables**                   |**Descripción**                                     |
+|-------------------------------|--------------------------------------------|----------------------------------------------------|
+| **Categóricas nominales**     | `Sexo`, `Tipar`, `Asisrec`, `Sitioocu`     | Identifican categorías sin orden específico        |
+| **Categóricas ordinales**     | `Escolap`, `Escolam`, `Escivp`, `Escivm`   | Categorías ordenadas (ej. niveles de educación)    |
+| **Numéricas discretas**       | `Edadp`, `Edadm`, `Libras`, `Onzas`        | Variables contables como edad y peso al nacer      |
+| **Ubicación geográfica**      | `Depreg`, `Mupreg`, `Depocu`, `Mupocu`     | Departamento y municipio de registro y ocurrencia  |
+| **Información del padre**     | `Ocupap`, `Escolap`, `Depnap`, `Naciop`    | Datos laborales y educativos del padre             |
+| **Información de la madre**   | `Ocupam`, `Escolam`, `Edadp`, `Naciom`     | Datos laborales, educativos y de edad de la madre  |
+| **Identificadores temporales**| `Mesreg`, `Añoreg`, `Mesocu`, `Añoocu`     | Fechas de registro y ocurrencia del nacimiento     |
+
+---
+
+**Notas importantes:**
+
+- Algunas variables tienen **nombres distintos entre años**, pero representan la misma información (ej. `"ViaPar"` vs `"Viapar"`).
+- En el análisis se conservarán **todas las columnas**, y se colocará `NA` cuando alguna variable no esté presente en ciertos años.
+- Se priorizará la estandarización de nombres antes de análisis agregados o gráficos.
+
+---
+
+## b.	Realicen un resumen de las variables numéricas e investiguen si siguen una distribución normal y, para las variables categóricas obtengan una tabla de frecuencia, documenten lo que vayan encontrando.
+
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+# Ruta donde están los .sav
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Variables clave
+vars_numericas <- c("Edadp", "Libras", "Onzas")
+vars_categoricas <- c("Sexo", "Tipar", "Escivp", "Escolap", "Asisrec", "Sitioocu")
+
+for (archivo in archivos) {
+  cat("\n\n📁 Analizando archivo:", basename(archivo), "\n")
+
+  tryCatch({
+    df <- read_sav(archivo)
+
+    # Verificar qué variables existen
+    vars_num_disponibles <- intersect(vars_numericas, names(df))
+    vars_cat_disponibles <- intersect(vars_categoricas, names(df))
+
+    # Conversión segura solo de columnas disponibles
+    df <- df %>%
+      mutate(
+        across(all_of(vars_num_disponibles), ~as.numeric(as.character(.))),
+        across(all_of(vars_cat_disponibles), ~as.factor(as.character(.)))
+      )
+
+    # FILTRAR VALORES IMPOSIBLES / ATÍPICOS
+    if ("Edadp" %in% names(df)) df <- df %>% filter(Edadp >= 10 & Edadp <= 100)
+    if ("Libras" %in% names(df)) df <- df %>% filter(Libras >= 1 & Libras <= 15)
+    if ("Onzas" %in% names(df)) df <- df %>% filter(Onzas >= 1 & Onzas <= 15)  # Quitamos los ceros
+
+    # Resumen numérico por variable
+    if (length(vars_num_disponibles) > 0) {
+      cat("\n📋 Resumen estadístico de variables numéricas:\n")
+      resumen <- df %>%
+        summarise(across(all_of(vars_num_disponibles), list(
+          media = ~mean(., na.rm = TRUE),
+          mediana = ~median(., na.rm = TRUE),
+          min = ~min(., na.rm = TRUE),
+          max = ~max(., na.rm = TRUE),
+          sd = ~sd(., na.rm = TRUE)
+        ), .names = "{.col}_{.fn}"))
+      print(resumen)
+
+      # Histogramas
+      for (var in vars_num_disponibles) {
+        print(ggplot(df, aes_string(x = var)) +
+                geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+                labs(title = paste("Distribución de", var, "en", basename(archivo))))
+      }
+    } else {
+      cat("\n⚠️ No se encontraron variables numéricas disponibles.\n")
+    }
+
+    # Frecuencias de categóricas
+    if (length(vars_cat_disponibles) > 0) {
+      cat("\n📋 Tablas de frecuencia (variables categóricas):\n")
+      for (cat_var in vars_cat_disponibles) {
+        cat("\n🔸 Frecuencia de", cat_var, ":\n")
+        print(table(df[[cat_var]], useNA = "ifany"))
+      }
+    } else {
+      cat("\n⚠️ No se encontraron variables categóricas disponibles.\n")
+    }
+
+    # Observaciones
+    cat("\n📝 Observaciones sugeridas:\n")
+    cat("- Las variables numéricas han sido limpiadas de outliers y ceros inválidos.\n")
+    cat("- Evalúa si las distribuciones son normales.\n")
+    cat("- Observa los valores más frecuentes por categoría.\n")
+    cat("\n🔍 Preguntas:\n")
+    cat("- ¿Las variables numéricas tienen forma de campana (normal)?\n")
+    cat("- ¿Existen valores atípicos?\n")
+    cat("- ¿Qué categorías son más comunes en sexo, tipo de parto, asistencia médica?\n")
+    cat("- ¿Hay diferencias llamativas en los años?\n")
+    
+
+    rm(df)
+    gc()
+
+  }, error = function(e) {
+    message("❌ Error leyendo ", basename(archivo), ": ", e$message)
+  })
+}
+```
+
+## c.	Crucen las variables que consideren sean las más importantes para hallar los elementos clave que permitan comprender lo que está causando el problema encontrado.**
+
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+# Ruta donde están los archivos .sav
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Variables que vamos a cruzar
+vars_necesarias <- c("Edadp", "Tipar", "Sexo", "Libras", "Onzas")
+
+# Loop para leer y analizar todos los archivos
+for (archivo in archivos) {
+  cat("\n\n📁 Analizando archivo:", basename(archivo), "\n")
+  
+  tryCatch({
+    df <- read_sav(archivo)
+
+    # Convertir a formatos adecuados
+    df <- df %>%
+      mutate(
+        Edadp = as.numeric(as.character(Edadp)),
+        Libras = as.numeric(as.character(Libras)),
+        Onzas = as.numeric(as.character(Onzas)),
+        Tipar = as.factor(as.character(Tipar)),
+        Sexo = as.factor(as.character(Sexo)),
+        peso_total = Libras + (Onzas / 16)
+      )
+
+    # Verificar que las variables estén presentes
+    if (all(c("Edadp", "Tipar") %in% names(df))) {
+      print(ggplot(df, aes(x = Tipar, y = Edadp)) +
+              geom_boxplot(fill = "lightblue") +
+              labs(title = paste("Edad del padre/madre vs. Tipo de parto —", basename(archivo)),
+                   x = "Tipo de parto", y = "Edad del padre/madre"))
+    }
+
+    if (all(c("Sexo", "peso_total") %in% names(df))) {
+      print(ggplot(df, aes(x = Sexo, y = peso_total)) +
+              geom_boxplot(fill = "lightgreen") +
+              labs(title = paste("Peso al nacer vs. Sexo del bebé —", basename(archivo)),
+                   x = "Sexo", y = "Peso total (libras)"))
+    }
+
+    # Observaciones sugeridas
+    cat("\n🧠 Observaciones sugeridas:\n")
+    cat("- ¿Hay diferencias de edad en los tipos de parto?\n")
+    cat("- ¿El sexo del bebé influye en el peso al nacer?\n")
+    cat("- ¿Existen patrones por año?\n")
+
+    rm(df)
+    gc()
+
+  }, error = function(e) {
+    message("❌ Error procesando ", basename(archivo), ": ", e$message)
+  })
+}
+```
+
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Etiquetas para tipo de parto
+etiquetas_tipar <- c("1" = "Vaginal", "2" = "Cesárea", "3" = "No especificado", "4" = "No aplica")
+
+# Variables que interesan
+vars_numericas <- c("Edadp", "Libras", "Onzas")
+vars_categoricas <- c("Sexo", "Escivp", "Escolap", "Asisrec", "Sitioocu")
+
+for (archivo in archivos) {
+  cat("\n\n📁 Procesando archivo:", basename(archivo), "\n")
+
+  tryCatch({
+    df <- read_sav(archivo)
+
+    # Convertir manualmente Tipar con etiquetas
+    if ("Tipar" %in% names(df)) {
+      df$Tipar <- as.character(df$Tipar)
+      df$Tipar <- recode(df$Tipar, !!!etiquetas_tipar)
+      df$Tipar <- factor(df$Tipar)
+    }
+
+    # Convertir variables numéricas
+    df <- df %>%
+      mutate(
+        Edadp = suppressWarnings(as.numeric(as.character(Edadp))),
+        Libras = suppressWarnings(as.numeric(as.character(Libras))),
+        Onzas = suppressWarnings(as.numeric(as.character(Onzas)))
+      )
+
+    # Convertir categóricas a factor si existen
+    for (var in vars_categoricas) {
+      if (var %in% names(df)) {
+        df[[var]] <- as.factor(as.character(df[[var]]))
+      }
+    }
+
+    # Filtrar valores válidos
+    df <- df %>% filter(Edadp < 90, Libras <= 10, Onzas <= 15)
+
+    # 📊 Edadp
+    if ("Edadp" %in% names(df)) {
+      print(ggplot(df, aes(x = Edadp)) +
+              geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+              labs(title = paste("Distribución de Edadp en", basename(archivo))) +
+              scale_x_continuous(breaks = seq(10, 90, by = 10)))
+    }
+
+    # 📊 Libras
+    if ("Libras" %in% names(df)) {
+      print(ggplot(df, aes(x = Libras)) +
+              geom_histogram(binwidth = 1, fill = "lightgreen", color = "black") +
+              labs(title = paste("Distribución de Libras en", basename(archivo))) +
+              scale_x_continuous(breaks = seq(1, 10, by = 1)))
+    }
+
+    # 📊 Onzas
+    if ("Onzas" %in% names(df)) {
+      print(ggplot(df, aes(x = Onzas)) +
+              geom_histogram(binwidth = 1, fill = "lightcoral", color = "black") +
+              labs(title = paste("Distribución de Onzas en", basename(archivo))) +
+              scale_x_continuous(breaks = 0:15))
+    }
+
+    # 📦 Edad vs Tipo de parto
+    if ("Edadp" %in% names(df) && "Tipar" %in% names(df)) {
+      print(ggplot(df, aes(x = Tipar, y = Edadp)) +
+              geom_boxplot(fill = "orchid", outlier.size = 0.8) +
+              labs(title = paste("Edad de la madre vs. Tipo de parto —", basename(archivo)),
+                   x = "Tipo de parto", y = "Edad de la madre"))
+    }
+
+    rm(df)
+    gc()
+
+  }, error = function(e) {
+    message("❌ Error en ", basename(archivo), ": ", e$message)
+  })
+}
+```
+
