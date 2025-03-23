@@ -1,4 +1,4 @@
-# 📊 Entrega 1: Análisis Exploratorio de Datos de Nacimientos en Guatemala (2009–2022)
+# 📊 Avances 1: Análisis Exploratorio de Datos de Nacimientos en Guatemala (2009–2022)
 
 ## 🏫 Universidad del Valle de Guatemala - Campus Central  
 **Facultad:** Ingeniería  
@@ -65,7 +65,7 @@ En este proyecto se trabajó con los conjuntos de datos de **nacimientos en Guat
 
 ---
 
-## 📢 Hallazgos Destacados  
+## 📢 Hallazgos Destacados hasta los avances 
 
 ✔️ La edad de los padres al momento del nacimiento tiene su moda entre 25 y 30 años.  
 ✔️ El peso al nacer muestra distribuciones normales, con la mayoría entre 6 y 7 libras.  
