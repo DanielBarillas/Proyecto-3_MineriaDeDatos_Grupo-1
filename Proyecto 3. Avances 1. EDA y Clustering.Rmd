@@ -4,9 +4,9 @@ author:
   - "Pablo Daniel Barillas Moreno, Carné No. 22193"
   - "Mathew Cordero Aquino, Carné No. 22982"
 output:
+  html_document: default
   pdf_document:
     latex_engine: xelatex
-  html_document: default
 date: "2025-03-14"
 header-includes:
    - \usepackage{fvextra}
@@ -14,10 +14,10 @@ header-includes:
 repository: "https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git"
 ---
 
-### Enlace al Repositorio del proyecto 3 de minería de datos del Grupo #1
+## Enlace al Repositorio del proyecto 3 de minería de datos del Grupo #1
 [Repositorio en GitHub](https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git)
 
-### 0. Descargar los conjuntos de datos.
+## 0. Descargar los conjuntos de datos.
 
 Para este punto ya se descargo año por año el .sav (formato SPSS) de la página [Instituto Nacional de Estadística - Guatemala](https://www.ine.gob.gt/vitales/), de nacimiento de bebes del país (Guatemala), para su posterior análisis.
 
@@ -52,14 +52,13 @@ resumen <- lapply(archivos, function(archivo) {
 print(resumen)
 
 ```
----
 Para este análisis se utilizaron los registros de nacimientos publicados por el Instituto Nacional de Estadística (INE) desde el año 2009 hasta 2022, en formato .sav (SPSS). En total, se procesaron 14 archivos, cada uno correspondiente a un año.
 
 Cada archivo contiene datos individuales de nacimientos ocurridos en el país, con variables sobre el menor, la madre, el padre y condiciones del nacimiento.
 
-### 1. Exploren los datos para encontrar preguntas interesantes y guías de investigación. Para esto: 
+## 1. Exploren los datos para encontrar preguntas interesantes y guías de investigación. Para esto: 
 
-## a.	Describan el conjunto de datos: cuantas variables y observaciones hay y el tipo de cada una de las variables.
+### a.	Describan el conjunto de datos: cuantas variables y observaciones hay y el tipo de cada una de las variables.
 
 ```{r}
 # Importar librerías necesarias
@@ -99,7 +98,6 @@ resumen_final <- bind_rows(resumen_general)
 # Mostrar resultado
 print(resumen_final)
 ```
----
 
 **Descripción General del Conjunto de Datos**
 
@@ -133,8 +131,6 @@ Cada archivo contiene datos individuales de nacimientos ocurridos en el país, c
 - **Variables máximas por año:** 42
 
 > Algunas variables tienen nombres distintos en ciertos años, pero representan la misma información. Se estandarizarán para el análisis posterior. Cuando una variable no está presente en todos los años, se conservará con valores `NA` según corresponda.
-
----
 
 ```{r}
 # Importar librerías necesarias
@@ -190,21 +186,15 @@ resumen_por_variable <- resumen_total %>%
 print(resumen_por_variable)
 ```
 
----
-
 **1.a. Descripción del conjunto de datos**
 
 El conjunto de datos corresponde a los registros de nacimientos recopilados por el Instituto Nacional de Estadística (INE) de Guatemala, desde el año **2009 hasta 2022**, en formato `.sav` (SPSS). Cada archivo representa un año y contiene información detallada sobre cada nacimiento ocurrido en el país.
-
----
 
 **Contenido general:**
 
 - **Años analizados:** 14 (2009 a 2022)
 - **Total de observaciones:** 5,048,195 nacimientos
 - **Cantidad de variables por año:** entre **37 y 42**
-
----
 
 **Variables principales y tipos**
 
@@ -220,17 +210,13 @@ A continuación se muestra una clasificación de los tipos de variables más com
 | **Información de la madre**   | `Ocupam`, `Escolam`, `Edadp`, `Naciom`     | Datos laborales, educativos y de edad de la madre  |
 | **Identificadores temporales**| `Mesreg`, `Añoreg`, `Mesocu`, `Añoocu`     | Fechas de registro y ocurrencia del nacimiento     |
 
----
-
 **Notas importantes:**
 
 - Algunas variables tienen **nombres distintos entre años**, pero representan la misma información (ej. `"ViaPar"` vs `"Viapar"`).
 - En el análisis se conservarán **todas las columnas**, y se colocará `NA` cuando alguna variable no esté presente en ciertos años.
 - Se priorizará la estandarización de nombres antes de análisis agregados o gráficos.
 
----
-
-## b.	Realicen un resumen de las variables numéricas e investiguen si siguen una distribución normal y, para las variables categóricas obtengan una tabla de frecuencia, documenten lo que vayan encontrando.
+### b.	Realicen un resumen de las variables numéricas e investiguen si siguen una distribución normal y, para las variables categóricas obtengan una tabla de frecuencia, documenten lo que vayan encontrando.
 
 ```{r}
 library(haven)
@@ -322,7 +308,7 @@ for (archivo in archivos) {
 }
 ```
 
-## c.	Crucen las variables que consideren sean las más importantes para hallar los elementos clave que permitan comprender lo que está causando el problema encontrado.**
+### c.	Crucen las variables que consideren sean las más importantes para hallar los elementos clave que permitan comprender lo que está causando el problema encontrado.**
 
 ```{r}
 library(haven)
@@ -471,41 +457,41 @@ for (archivo in archivos) {
 }
 ```
 
-## d.	Realicen gráficos exploratorios que les dé ideas del estado de los datos.
+### d.	Realicen gráficos exploratorios que les dé ideas del estado de los datos.
 
 ```{r}
 
 ```
 
 
-## e.	Hagan un agrupamiento “clustering” e interpreten los resultados. 
+### e.	Hagan un agrupamiento “clustering” e interpreten los resultados. 
 
 ```{r}
 
 ```
 
 
-### 2. Una vez hayan explorado los datos...
+## 2. Una vez hayan explorado los datos...
 
-## a.	Describan la situación problemática que los lleva a plantear un problema a resolver.
-
-```{r}
-
-```
-
-## b.	Enuncien un problema científico y unos objetivos preliminares.
+### a.	Describan la situación problemática que los lleva a plantear un problema a resolver.
 
 ```{r}
 
 ```
 
-## c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
+### b.	Enuncien un problema científico y unos objetivos preliminares.
 
 ```{r}
 
 ```
 
-## d.	Escriban unas conclusiones con los hallazgos encontrados durante el análisis exploratorio. 
+### c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
+
+```{r}
+
+```
+
+### d.	Escriban unas conclusiones con los hallazgos encontrados durante el análisis exploratorio. 
 
 ```{r}
 
