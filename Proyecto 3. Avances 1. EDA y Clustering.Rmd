@@ -14,10 +14,10 @@ header-includes:
 repository: "https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git"
 ---
 
-## Enlace al Repositorio del proyecto 3 de minería de datos del Grupo #1
+### Enlace al Repositorio del proyecto 3 de minería de datos del Grupo #1
 [Repositorio en GitHub](https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git)
 
-## 0. Descargar los conjuntos de datos.
+### 0. Descargar los conjuntos de datos.
 
 Para este punto ya se descargo año por año el .sav (formato SPSS) de la página [Instituto Nacional de Estadística - Guatemala](https://www.ine.gob.gt/vitales/), de nacimiento de bebes del país (Guatemala), para su posterior análisis.
 
@@ -52,13 +52,14 @@ resumen <- lapply(archivos, function(archivo) {
 print(resumen)
 
 ```
+---
 Para este análisis se utilizaron los registros de nacimientos publicados por el Instituto Nacional de Estadística (INE) desde el año 2009 hasta 2022, en formato .sav (SPSS). En total, se procesaron 14 archivos, cada uno correspondiente a un año.
 
 Cada archivo contiene datos individuales de nacimientos ocurridos en el país, con variables sobre el menor, la madre, el padre y condiciones del nacimiento.
 
-## 1. Exploren los datos para encontrar preguntas interesantes y guías de investigación. Para esto: 
+### 1. Exploren los datos para encontrar preguntas interesantes y guías de investigación. Para esto: 
 
-### a.	Describan el conjunto de datos: cuantas variables y observaciones hay y el tipo de cada una de las variables.
+## a.	Describan el conjunto de datos: cuantas variables y observaciones hay y el tipo de cada una de las variables.
 
 ```{r}
 # Importar librerías necesarias
@@ -98,6 +99,7 @@ resumen_final <- bind_rows(resumen_general)
 # Mostrar resultado
 print(resumen_final)
 ```
+---
 
 **Descripción General del Conjunto de Datos**
 
@@ -131,6 +133,8 @@ Cada archivo contiene datos individuales de nacimientos ocurridos en el país, c
 - **Variables máximas por año:** 42
 
 > Algunas variables tienen nombres distintos en ciertos años, pero representan la misma información. Se estandarizarán para el análisis posterior. Cuando una variable no está presente en todos los años, se conservará con valores `NA` según corresponda.
+
+---
 
 ```{r}
 # Importar librerías necesarias
@@ -186,15 +190,21 @@ resumen_por_variable <- resumen_total %>%
 print(resumen_por_variable)
 ```
 
+---
+
 **1.a. Descripción del conjunto de datos**
 
 El conjunto de datos corresponde a los registros de nacimientos recopilados por el Instituto Nacional de Estadística (INE) de Guatemala, desde el año **2009 hasta 2022**, en formato `.sav` (SPSS). Cada archivo representa un año y contiene información detallada sobre cada nacimiento ocurrido en el país.
+
+---
 
 **Contenido general:**
 
 - **Años analizados:** 14 (2009 a 2022)
 - **Total de observaciones:** 5,048,195 nacimientos
 - **Cantidad de variables por año:** entre **37 y 42**
+
+---
 
 **Variables principales y tipos**
 
@@ -210,13 +220,17 @@ A continuación se muestra una clasificación de los tipos de variables más com
 | **Información de la madre**   | `Ocupam`, `Escolam`, `Edadp`, `Naciom`     | Datos laborales, educativos y de edad de la madre  |
 | **Identificadores temporales**| `Mesreg`, `Añoreg`, `Mesocu`, `Añoocu`     | Fechas de registro y ocurrencia del nacimiento     |
 
+---
+
 **Notas importantes:**
 
 - Algunas variables tienen **nombres distintos entre años**, pero representan la misma información (ej. `"ViaPar"` vs `"Viapar"`).
 - En el análisis se conservarán **todas las columnas**, y se colocará `NA` cuando alguna variable no esté presente en ciertos años.
 - Se priorizará la estandarización de nombres antes de análisis agregados o gráficos.
 
-### b.	Realicen un resumen de las variables numéricas e investiguen si siguen una distribución normal y, para las variables categóricas obtengan una tabla de frecuencia, documenten lo que vayan encontrando.
+---
+
+## b.	Realicen un resumen de las variables numéricas e investiguen si siguen una distribución normal y, para las variables categóricas obtengan una tabla de frecuencia, documenten lo que vayan encontrando.
 
 ```{r}
 library(haven)
@@ -308,7 +322,17 @@ for (archivo in archivos) {
 }
 ```
 
-### c.	Crucen las variables que consideren sean las más importantes para hallar los elementos clave que permitan comprender lo que está causando el problema encontrado.**
+### Analisis de los Hallazgos
+
+Podemos ver que las edades medias y minimas son de 28 y 12 años, al igual que las libras medias son de 6.3 a 6 , lo cual es un indide de una poblacion relativamente joven . 
+
+Tambien vemos que conforme a los año esta media de libras se ido desplazando mas hacia la derecha, Y que la cantidad de personas a aumentado mas a la edades grandes , lo que puede indicar que los nacimientos hemos visto que la poblacion ha aumentado esto puede mostrar a que la poblacion se ha hecho mucho mas anciana pero tambien aumento el peso de los mismos . Ello es posible que sea fruto de un sesgo dado a que ahora hay muchos mas adultos que antes. 
+
+
+Tambien vemos que las onzas de los nacimientos se han visto distribuidos de una forma que no es normal, sino que puede deberse a datos atipicos que se ven sesgos en ambos extremos. 
+
+
+## c.	Crucen las variables que consideren sean las más importantes para hallar los elementos clave que permitan comprender lo que está causando el problema encontrado.**
 
 ```{r}
 library(haven)
@@ -370,7 +394,192 @@ for (archivo in archivos) {
 }
 ```
 
+
+
 ```{r}
+ library(haven)
+ library(dplyr)
+ library(ggplot2)
+ 
+ ruta <- "Nacimientos"
+ archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+ 
+ # Etiquetas para tipo de parto
+ etiquetas_tipar <- c("1" = "Vaginal", "2" = "Cesárea", "3" = "No especificado", "4" = "No aplica")
+ 
+# # Variables que interesan
+ vars_numericas <- c("Edadp", "Libras", "Onzas")
+ vars_categoricas <- c("Sexo", "Escivp", "Escolap", "Asisrec", "Sitioocu")
+ 
+ for (archivo in archivos) {
+   cat("\n\n📁 Procesando archivo:", basename(archivo), "\n")
+ 
+   tryCatch({
+     df <- read_sav(archivo)
+ 
+     # Convertir manualmente Tipar con etiquetas
+     if ("Tipar" %in% names(df)) {
+       df$Tipar <- as.character(df$Tipar)
+       df$Tipar <- recode(df$Tipar, !!!etiquetas_tipar)
+       df$Tipar <- factor(df$Tipar)
+     }
+ 
+     # Convertir variables numéricas
+     df <- df %>%
+       mutate(
+         Edadp = suppressWarnings(as.numeric(as.character(Edadp))),
+         Libras = suppressWarnings(as.numeric(as.character(Libras))),
+         Onzas = suppressWarnings(as.numeric(as.character(Onzas)))
+       )
+ 
+     # Convertir categóricas a factor si existen
+     for (var in vars_categoricas) {
+       if (var %in% names(df)) {
+         df[[var]] <- as.factor(as.character(df[[var]]))
+       }
+     }
+ 
+     # Filtrar valores válidos
+     df <- df %>% filter(Edadp < 90, Libras <= 10, Onzas <= 15)
+ 
+     # 📊 Edadp
+     if ("Edadp" %in% names(df)) {
+       print(ggplot(df, aes(x = Edadp)) +
+               geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+               labs(title = paste("Distribución de Edadp en", basename(archivo))) +
+               scale_x_continuous(breaks = seq(10, 90, by = 10)))
+     }
+ 
+     # 📊 Libras
+     if ("Libras" %in% names(df)) {
+       print(ggplot(df, aes(x = Libras)) +
+               geom_histogram(binwidth = 1, fill = "lightgreen", color = "black") +
+               labs(title = paste("Distribución de Libras en", basename(archivo))) +
+               scale_x_continuous(breaks = seq(1, 10, by = 1)))
+     }
+ 
+     # 📊 Onzas
+     if ("Onzas" %in% names(df)) {
+       print(ggplot(df, aes(x = Onzas)) +
+               geom_histogram(binwidth = 1, fill = "lightcoral", color = "black") +
+               labs(title = paste("Distribución de Onzas en", basename(archivo))) +
+               scale_x_continuous(breaks = 0:15))
+     }
+ 
+     # 📦 Edad vs Tipo de parto
+     if ("Edadp" %in% names(df) && "Tipar" %in% names(df)) {
+       print(ggplot(df, aes(x = Tipar, y = Edadp)) +
+               geom_boxplot(fill = "orchid", outlier.size = 0.8) +
+               labs(title = paste("Edad de la madre vs. Tipo de parto —", basename(archivo)),
+                    x = "Tipo de parto", y = "Edad de la madre"))
+     }
+ 
+     rm(df)
+     gc()
+ 
+   }, error = function(e) {
+     message("❌ Error en ", basename(archivo), ": ", e$message)
+   })
+ }
+```
+
+
+### Analisis de Variables y  Distribuciones
+
+Ademas de las distribuciones de las variables podemos ver  en como se relacionan la edad de la madre con el tipo de parto, vemos que el mas comun es de vaginal y le sigue despues del de cesarea, tambien que las madres que tienen mas partos por cesarea son mas grandes en edad que las que no . Y el vaginal son mas jovenes, muy posiblemente por tema de la edad se debe esto 
+
+Pero tambien podemos ver algo muy interesante y es que una gran parte de las madres son en mayor edad, y tambien que el parto por cesarea es mas comun que otros años, esto puede indicar que muchas madres debido a la edad o por temas de seguridad deciden el uso de cesarea para poder dar a luz. 
+
+
+
+## d.	Realicen gráficos exploratorios que les dé ideas del estado de los datos.
+
+
+Para hacer este analisis debemos de profundizar sobre los datos, Por ello vamos a utilizar algunas graficos que representen lo que estamos buscando
+
+Lo primero es responder a las preguntas por ejemplo
+
+¿El sexo del bebé influye en el peso al nacer?
+
+Para ello realizamos el siguiente grafico
+
+
+
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+for (archivo in archivos) {
+  cat("\n\n📁 Procesando archivo:", basename(archivo), "\n")
+
+  tryCatch({
+    df <- read_sav(archivo)
+
+    # Asegurar que las variables existen
+    if (!all(c("Sexo", "Libras", "Onzas", "Añoreg") %in% names(df))) {
+      stop("Faltan variables necesarias en el archivo ", basename(archivo))
+    }
+
+    # Convertir a valores numéricos
+    df <- df %>%
+      mutate(
+        Libras = suppressWarnings(as.numeric(as.character(Libras))),
+        Onzas = suppressWarnings(as.numeric(as.character(Onzas))),
+        Sexo = as.factor(as.character(Sexo)),
+        peso_total = Libras + (Onzas / 16)
+      ) %>%
+      filter(peso_total > 1, peso_total <= 10)  # Filtrar pesos válidos
+
+    # Agrupar por año y sexo para calcular el peso promedio
+    df_resumen <- df %>%
+      group_by(Añoreg, Sexo) %>%
+      summarise(peso_promedio = mean(peso_total, na.rm = TRUE), .groups = "drop")
+
+    # Gráfica de barras con el peso promedio
+    p <- ggplot(df_resumen, aes(x = Sexo, y = peso_promedio, fill = Sexo)) +
+      stat_summary(fun = mean, geom = "bar", position = "dodge") +
+      labs(title = "Peso promedio al nacer según el sexo del bebé",
+           x = "Sexo del bebé",
+           y = "Peso al nacer (libras)") +
+      theme_minimal()
+
+    # Asegúrate de imprimir la gráfica
+    print(p)
+
+    rm(df, df_resumen)
+    gc()
+
+  }, error = function(e) {
+    message("❌ Error en ", basename(archivo), ": ", e$message)
+  })
+}
+
+
+
+
+
+
+
+
+```
+
+### Analisis del grafico
+Podemos ver que realmente no afecta en nada el genero en la diferencia de pesos, si se puede ver que solo hay una ligera diferencia de pesos por las mujeres pesando menos pero no es mucho. Asi que puede ser por otros motivos
+
+
+
+Otra forma para poder ver que esta afectando el peso de los bebes puede ser la edad en las que sus madres los tuvieorn. 
+Por ello vamos a hacer el siguiente grafico
+
+
+
+
+```{r}
+
 library(haven)
 library(dplyr)
 library(ggplot2)
@@ -403,7 +612,8 @@ for (archivo in archivos) {
       mutate(
         Edadp = suppressWarnings(as.numeric(as.character(Edadp))),
         Libras = suppressWarnings(as.numeric(as.character(Libras))),
-        Onzas = suppressWarnings(as.numeric(as.character(Onzas)))
+        Onzas = suppressWarnings(as.numeric(as.character(Onzas))),
+        peso_total = Libras + (Onzas / 16)  # Calcular peso total en libras
       )
 
     # Convertir categóricas a factor si existen
@@ -416,36 +626,13 @@ for (archivo in archivos) {
     # Filtrar valores válidos
     df <- df %>% filter(Edadp < 90, Libras <= 10, Onzas <= 15)
 
-    # 📊 Edadp
-    if ("Edadp" %in% names(df)) {
-      print(ggplot(df, aes(x = Edadp)) +
-              geom_histogram(bins = 30, fill = "skyblue", color = "black") +
-              labs(title = paste("Distribución de Edadp en", basename(archivo))) +
-              scale_x_continuous(breaks = seq(10, 90, by = 10)))
-    }
-
-    # 📊 Libras
-    if ("Libras" %in% names(df)) {
-      print(ggplot(df, aes(x = Libras)) +
-              geom_histogram(binwidth = 1, fill = "lightgreen", color = "black") +
-              labs(title = paste("Distribución de Libras en", basename(archivo))) +
-              scale_x_continuous(breaks = seq(1, 10, by = 1)))
-    }
-
-    # 📊 Onzas
-    if ("Onzas" %in% names(df)) {
-      print(ggplot(df, aes(x = Onzas)) +
-              geom_histogram(binwidth = 1, fill = "lightcoral", color = "black") +
-              labs(title = paste("Distribución de Onzas en", basename(archivo))) +
-              scale_x_continuous(breaks = 0:15))
-    }
-
-    # 📦 Edad vs Tipo de parto
-    if ("Edadp" %in% names(df) && "Tipar" %in% names(df)) {
-      print(ggplot(df, aes(x = Tipar, y = Edadp)) +
-              geom_boxplot(fill = "orchid", outlier.size = 0.8) +
-              labs(title = paste("Edad de la madre vs. Tipo de parto —", basename(archivo)),
-                   x = "Tipo de parto", y = "Edad de la madre"))
+    # 📊 Peso vs Edad de la madre
+    if ("Edadp" %in% names(df) && "peso_total" %in% names(df)) {
+      print(ggplot(df, aes(x = Edadp, y = peso_total)) +
+              geom_point(color = "steelblue", alpha = 0.6) +
+              labs(title = paste("Relación entre Edad de la madre y Peso al nacer en", basename(archivo)),
+                   x = "Edad de la madre (años)", y = "Peso al nacer (libras)") +
+              theme_minimal())
     }
 
     rm(df)
@@ -455,43 +642,145 @@ for (archivo in archivos) {
     message("❌ Error en ", basename(archivo), ": ", e$message)
   })
 }
+
 ```
 
-### d.	Realicen gráficos exploratorios que les dé ideas del estado de los datos.
+### Analisis del grafico
+
+Podemos ver que la mayor concentracion de los pesos es en 6  de kilos, y tambien que las madres que mas son las que tienen estos bebes son madres mucho mas grandes. De hecho se ve que las jovenes suelen dar a luz un rango de bebes mas pesados. Pero mientras mas jovenes tambien se ve que los pesos de los bebes suelen ser menos pesados al igual que las mas grandes. 
+
+Esto producto a que las madres jovenes y mas grandes suelen tener mas problemas en el tiempo de gestacion ya sea por prematura o ser demasiado grandes al tener su hijo , lo que provoca nacimientos prematuros . 
+
+
+
+Ahora nos haremos la siguiente pregunta y es la de si la escolaridad de la madre influye en el peso que tienen los hijos de ella. 
+
+
+```{r}
+
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Etiquetas para tipo de parto
+etiquetas_tipar <- c("1" = "Vaginal", "2" = "Cesárea", "3" = "No especificado", "4" = "No aplica")
+
+# Variables que interesan
+vars_numericas <- c("Edadp", "Libras", "Onzas")
+vars_categoricas <- c("Sexo", "Escivp", "Escolap", "Asisrec", "Sitioocu")
+
+for (archivo in archivos) {
+  cat("\n\n📁 Procesando archivo:", basename(archivo), "\n")
+
+  tryCatch({
+    df <- read_sav(archivo)
+
+    # Convertir manualmente Tipar con etiquetas
+    if ("Tipar" %in% names(df)) {
+      df$Tipar <- as.character(df$Tipar)
+      df$Tipar <- recode(df$Tipar, !!!etiquetas_tipar)
+      df$Tipar <- factor(df$Tipar)
+    }
+
+    # Convertir variables numéricas
+    df <- df %>%
+      mutate(
+        Edadp = suppressWarnings(as.numeric(as.character(Edadp))),
+        Libras = suppressWarnings(as.numeric(as.character(Libras))),
+        Onzas = suppressWarnings(as.numeric(as.character(Onzas))),
+        peso_total = Libras + (Onzas / 16)  # Calcular peso total en libras
+      )
+
+    # Convertir categóricas a factor si existen
+    for (var in vars_categoricas) {
+      if (var %in% names(df)) {
+        df[[var]] <- as.factor(as.character(df[[var]]))
+      }
+    }
+
+    # Filtrar valores válidos
+    df <- df %>% filter(Edadp < 90, Libras <= 10, Onzas <= 15)
+
+    # 📊 Influencia de la escolaridad en el peso del bebé
+    if ("Escolap" %in% names(df) && "peso_total" %in% names(df)) {
+      print(ggplot(df, aes(x = Escolap, y = peso_total, fill = Escolap)) +
+              geom_boxplot() +
+              labs(title = paste("Influencia de la escolaridad de la madre en el peso del bebé en", basename(archivo)),
+                   x = "Nivel educativo de la madre", y = "Peso al nacer (libras)") +
+              theme_minimal())
+    }
+
+    # 📊 Influencia de la escolaridad en la edad de la madre
+    if ("Escolap" %in% names(df) && "Edadp" %in% names(df)) {
+      print(ggplot(df, aes(x = Escolap, y = Edadp, fill = Escolap)) +
+              geom_boxplot() +
+              labs(title = paste("Influencia de la escolaridad de la madre en la edad al tener el bebé en", basename(archivo)),
+                   x = "Nivel educativo de la madre", y = "Edad de la madre (años)") +
+              theme_minimal())
+    }
+
+    rm(df)
+    gc()
+
+  }, error = function(e) {
+    message("❌ Error en ", basename(archivo), ": ", e$message)
+  })
+}
+
+```
+
+
+## Analisis del grafico
+
+
+Podemos ver que si hay una tendencia a que la escolaridad de la madre afecta al peso de los bebes , pero sucede algo curioso que el nivel alto de escolaridad se sale de la tendencia que el nivel de escolaridad haga que el peso de los niños sea menor.
+
+Tambien si observamos que el nivel educativo de la madre la tendencia es de bajo y tambien de una escolaridad de 9. Lo que indica que una gran parte de las madres o tienen muy baja escolaridad o muy alta, y tambien se puede observar que la mayoria de las que son jovenes son las que tienen escolaridades bajas y altas y las que tienen escolaridad de entre 5 y 6 son personas mas grandes. 
+
+Esto puede ser un indicador del nivel socieconomico de la madre y como este influye  a que dad suele tener a un bebe. 
+
+
+
+
+
+
+
+
+
+
+
+
+## e.	Hagan un agrupamiento “clustering” e interpreten los resultados. 
 
 ```{r}
 
 ```
 
 
-### e.	Hagan un agrupamiento “clustering” e interpreten los resultados. 
+### 2. Una vez hayan explorado los datos...
+
+## a.	Describan la situación problemática que los lleva a plantear un problema a resolver.
 
 ```{r}
 
 ```
 
-
-## 2. Una vez hayan explorado los datos...
-
-### a.	Describan la situación problemática que los lleva a plantear un problema a resolver.
+## b.	Enuncien un problema científico y unos objetivos preliminares.
 
 ```{r}
 
 ```
 
-### b.	Enuncien un problema científico y unos objetivos preliminares.
+## c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
 
 ```{r}
 
 ```
 
-### c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
-
-```{r}
-
-```
-
-### d.	Escriban unas conclusiones con los hallazgos encontrados durante el análisis exploratorio. 
+## d.	Escriban unas conclusiones con los hallazgos encontrados durante el análisis exploratorio. 
 
 ```{r}
 
