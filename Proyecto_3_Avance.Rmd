@@ -1,0 +1,1135 @@
+---
+title: "Proyecto 3. Avances 1. Eda y Clustering"
+author: 
+  - "Pablo Daniel Barillas Moreno, Carné No. 22193"
+  - "Mathew Cordero Aquino, Carné No. 22982"
+   - "Rafael Andres Chivalan"
+output:
+  html_document: default
+  pdf_document:
+    latex_engine: xelatex
+date: "2025-03-14"
+header-includes:
+   - \usepackage{fvextra}
+   - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+repository: "https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git"
+---
+
+## Enlace al Repositorio del proyecto 3 de minería de datos del Grupo #1
+[Repositorio en GitHub](https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git)
+
+## 0. Descargar los conjuntos de datos.
+
+Para este punto ya se descargo el .sav (formato SPSS) de año por año de la página [Instituto Nacional de Estadística - Guatemala](https://www.ine.gob.gt/vitales/), de nacimiento de bebes del país (Guatemala), para su posterior análisis.
+
+Para este análisis se utilizaron los registros de nacimientos publicados por el Instituto Nacional de Estadística (INE) desde el año 2009 hasta 2022, en formato .sav (SPSS). En total, se procesaron 14 archivos, cada uno correspondiente a un año.
+
+Cada archivo contiene datos individuales de nacimientos ocurridos en el país, con variables sobre el menor, la madre, el padre y condiciones del nacimiento.
+
+## 1. Exploren los datos para encontrar preguntas interesantes y guías de investigación. Para esto:
+
+**⚠️ Este bloque fue utilizado únicamente para generar el archivo limpio 'datos_nacimientos_de_2009_a_2022.RData'.**
+
+**No es necesario volver a ejecutarlo a menos que se modifiquen los datos fuente (.sav).**
+
+```{r, eval = FALSE}
+library(haven)
+library(dplyr)
+library(purrr)
+library(stringr)
+
+# Ruta donde están los .sav
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Diccionario de equivalencias para unificar nombres
+diccionario_nombres <- c(
+  "Viapar"     = "ViaPar",
+  "Pueblopp"   = "PuebloPP",
+  "Pueblopm"   = "PuebloPM",
+  "ciuomad"    = "Ciuomad",
+  "ciuopad"    = "Ciuopad",
+  "munnam"     = "Munpnam",
+  "mupreg"     = "Mupreg",
+  "muprep"     = "Muprep",
+  "muprem"     = "Muprem",
+  "mupnam"     = "Mupnam"
+)
+
+# Función para renombrar columnas según diccionario
+renombrar_columnas <- function(df) {
+  names(df) <- recode(names(df), !!!diccionario_nombres)
+  return(df)
+}
+
+# Paso 1: Obtener todas las columnas posibles estandarizadas
+nombres_globales <- archivos %>%
+  map(~ {
+    df <- read_sav(.x)
+    names(df) <- recode(names(df), !!!diccionario_nombres)
+    names(df)
+  }) %>%
+  flatten_chr() %>%
+  unique()
+
+# Paso 2: Leer, limpiar, completar y etiquetar año
+leer_estandarizado <- function(archivo) {
+  tryCatch({
+    df <- read_sav(archivo)
+    df <- renombrar_columnas(df)
+    df <- df %>% mutate(across(everything(), as.character))
+
+    # Agregar columnas faltantes como NA
+    faltantes <- setdiff(nombres_globales, names(df))
+    df[faltantes] <- NA
+    df <- df[, nombres_globales]
+
+    # Agregar columna del año
+    df$archivo <- basename(archivo)
+    df$anio <- stringr::str_extract(df$archivo, "\\d{4}")
+
+    return(df)
+  }, error = function(e) {
+    message("❌ Error en ", archivo, ": ", e$message)
+    return(NULL)
+  })
+}
+
+# Unir todos los archivos estandarizados
+datos_completos <- archivos %>%
+  map(leer_estandarizado) %>%
+  bind_rows()
+
+# 🔄 Convertir variables clave a numéricas
+datos_completos <- datos_completos %>%
+  mutate(
+    Edadp = as.numeric(Edadp),
+    Libras = as.numeric(Libras),
+    Onzas = as.numeric(Onzas)
+  )
+
+# Guardar el .RData final
+save(datos_completos, file = "datos_nacimientos_de_2009_a_2022.RData")
+
+cat("✅ Archivo listo: 'datos_nacimientos_limpio.RData'\n")
+cat("📦 Observaciones:", nrow(datos_completos), " | Variables:", ncol(datos_completos), "\n")
+```
+```{r}
+# Cargar el archivo
+load("datos_nacimientos_de_2009_a_2022.RData")
+
+# Verifica si el objeto se cargó correctamente
+ls()  # Debería mostrar "datos_completos"
+
+# Verifica estructura
+str(datos_completos)
+
+# Total de observaciones y variables
+cat("🔎 Observaciones:", nrow(datos_completos), "\n")
+cat("🔎 Variables:", ncol(datos_completos), "\n")
+
+# Verifica cuántos registros hay por archivo original
+table(datos_completos$archivo)
+```
+```{r}
+# Cargar datos unificados
+load("datos_nacimientos_de_2009_a_2022.RData")
+
+library(dplyr)
+library(tidyr)
+
+# 1. Porcentaje de NA por columna
+porcentaje_na <- datos_completos %>%
+  summarise(across(everything(), ~mean(is.na(.))*100)) %>%
+  pivot_longer(everything(), names_to = "variable", values_to = "porcentaje_na") %>%
+  arrange(desc(porcentaje_na))
+
+# 2. En qué años aparece cada variable (con datos no vacíos)
+presencia_por_año <- datos_completos %>%
+  group_by(archivo) %>%
+  summarise(across(everything(), ~sum(!is.na(.)) > 0)) %>%
+  pivot_longer(-archivo, names_to = "variable", values_to = "presente") %>%
+  filter(presente == TRUE) %>%
+  group_by(variable) %>%
+  summarise(anios_con_dato = n()) %>%
+  arrange(desc(anios_con_dato))
+
+# 3. Unir resumen
+resumen_variables <- porcentaje_na %>%
+  left_join(presencia_por_año, by = "variable")
+
+# 4. Ver tabla final
+print(resumen_variables)
+```
+
+### a.	Describan el conjunto de datos: cuantas variables y observaciones hay y el tipo de cada una de las variables.
+
+```{r}
+# Cargar archivo
+load("datos_nacimientos_de_2009_a_2022.RData")  # o datos_nacimientos_limpio.RData
+
+library(dplyr)
+
+# Obtener total de observaciones y variables
+cat("📊 Total de observaciones:", nrow(datos_completos), "\n")
+cat("📊 Total de variables:", ncol(datos_completos), "\n\n")
+
+# Crear tabla con nombre, tipo y ejemplo por variable
+resumen_variables <- tibble(
+  variable = names(datos_completos),
+  tipo = sapply(datos_completos, class),
+  ejemplo = sapply(datos_completos, function(x) {
+    first(na.omit(x))
+  })
+)
+
+# Mostrar tabla resumen
+print(resumen_variables)
+```
+
+```{r}
+# Importar librerías necesarias
+library(haven)
+library(dplyr)
+
+# Ruta de la carpeta con los archivos .sav
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Leer y resumir cada archivo
+resumen <- lapply(archivos, function(archivo) {
+  tryCatch({
+    datos <- read_sav(archivo)
+    list(
+      archivo = basename(archivo),
+      observaciones = nrow(datos),
+      variables = ncol(datos),
+      columnas = names(datos)
+    )
+  }, error = function(e) {
+    list(
+      archivo = basename(archivo),
+      error = as.character(e)
+    )
+  })
+})
+
+# Mostrar resumen
+print(resumen)
+```
+
+**Descripción General del Conjunto de Datos**
+
+Para este análisis se utilizaron los registros de nacimientos publicados por el Instituto Nacional de Estadística (INE) desde el año **2009 hasta 2022**, en formato `.sav` (SPSS). En total, se procesaron **14 archivos**, cada uno correspondiente a un año.
+
+Cada archivo contiene datos individuales de nacimientos ocurridos en el país, con variables sobre el menor, la madre, el padre y condiciones del nacimiento.
+
+**Resumen por año:**
+
+| Año  | Observaciones  | Variables |
+|------|----------------|-----------|
+| 2009 | 351,628        | 37        |
+| 2010 | 361,906        | 39        |
+| 2011 | 373,692        | 39        |
+| 2012 | 388,613        | 41        |
+| 2013 | 387,342        | 41        |
+| 2014 | 386,195        | 39        |
+| 2015 | 391,425        | 42        |
+| 2016 | 390,382        | 42        |
+| 2017 | 381,664        | 42        |
+| 2018 | 383,263        | 42        |
+| 2019 | 366,855        | 42        |
+| 2020 | 341,212        | 42        |
+| 2021 | 345,149        | 42        |
+| 2022 | 345,869        | 42        |
+
+**Totales:**
+
+- **Total de observaciones:** 5,195,195
+- **Variables mínimas por año:** 37
+- **Variables máximas por año:** 42
+
+> Algunas variables tienen nombres distintos en ciertos años, pero representan la misma información. Se estandarizarán para el análisis posterior. Cuando una variable no está presente en todos los años, se conservará con valores `NA` según corresponda.
+
+**Descripción del conjunto de datos**
+
+El conjunto de datos corresponde a los registros de nacimientos recopilados por el Instituto Nacional de Estadística (INE) de Guatemala, desde el año **2009 hasta 2022**, en formato `.sav` (SPSS). Cada archivo representa un año y contiene información detallada sobre cada nacimiento ocurrido en el país.
+
+**Contenido general:**
+
+- **Años analizados:** 14 años (de 2009 a 2022)
+- **Total de observaciones:** 5,195,195 nacimientos
+- **Cantidad de variables por año:** entre **37 y 42**
+
+**Variables y tipos**
+
+A continuación se muestra una clasificación de los tipos de variables en los archivos:
+
+| **Tipo de Variable**             | **Ejemplos de variables**                                                                                             | **Descripción**                                                 |
+|----------------------------------|-----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| **Categóricas nominales**        | `Sexo`, `Tipar`, `Asisrec`, `Sitioocu`, `ViaPar`, `PuebloPP`, `PuebloPM`                                              | Identifican categorías sin orden específico.                    |
+| **Categóricas ordinales**        | `Escolap`, `Escolam`, `Escivp`, `Escivm`                                                                              | Categorías con jerarquía, como nivel educativo o estado civil.  |
+| **Numéricas discretas**          | `Edadp`, `Edadm`, `Libras`, `Onzas`, `Tohite`, `Tohinm`, `Tohivi`                                                     | Valores numéricos contables o discretos (no continuos).         |
+| **Ubicación geográfica**         | `Depreg`, `Mupreg`, `Depocu`, `Mupocu`, `Deprep`, `Muprep`, `Deprem`, `Muprem`, `Depnap`, `Mupnap`, `Depnam`, `Mupnam`| Lugar de residencia, nacimiento o ocurrencia del evento.        |
+| **Información del padre**        | `Ocupap`, `Escolap`, `Depnap`, `Naciop`, `Paisnacp`, `Paisrep`                                                        | Datos del padre: ocupación, escolaridad, nacionalidad, etc.     |
+| **Información de la madre**      | `Ocupam`, `Escolam`, `Edadp`, `Naciom`, `Paisnacm`, `Paisrem`                                                         | Datos de la madre: similares al padre, además de edad.          |
+| **Identificadores temporales**   | `Mesreg`, `Añoreg`, `Mesocu`, `Añoocu`, `Diaocu`                                                                      | Datos de cuándo ocurrió y se registró el nacimiento.            |
+| **Asistencia médica y parto**    | `Sitioocu`, `TipoIns`, `Tipar`, `Asisrec`                                                                             | Características del parto y asistencia médica recibida.         |
+| **Tamaño familiar**              | `Tohite`, `Tohinm`, `Tohivi`                                                                                          | Cantidad de hijos tenidos, vivos o informados.                  |
+| **Otros códigos del nacimiento** | `grupetma`, `Gretnp`, `Gretnm`, `Ciuopad`, `Ciuomad`, `Munpnam`                                                       | Códigos específicos de clasificación SPSS o registros puntuales.|
+| **Identificación del archivo**   | `archivo`, `anio`                                                                                                     | Metadatos del archivo origen y año del registro.                |
+
+**Notas importantes:**
+
+- Algunas variables tienen **nombres distintos entre años**, pero representan la misma información (ej. `"ViaPar"` vs `"Viapar"`).
+- En el análisis se conservarán **todas las columnas**, y se colocará `NA` cuando alguna variable no esté presente en ciertos años.
+- Se priorizará la estandarización de nombres antes de análisis agregados o gráficos.
+
+**A continuación se tienen la descripción y clasificación de todas las variables:**
+
+| **Variable**   | **Descripción**                                                                  |
+|----------------|----------------------------------------------------------------------------------|
+| Depreg         | Código del departamento donde se registró el nacimiento                          |
+| Mupreg         | Código del municipio donde se registró el nacimiento                             |
+| Mesreg         | Mes de registro del nacimiento                                                   |
+| Añoreg         | Año de registro del nacimiento                                                   |
+| Depocu         | Código del departamento donde ocurrió el nacimiento                              |
+| Mupocu         | Código del municipio donde ocurrió el nacimiento                                 |
+| Libras         | Peso del bebé al nacer en libras                                                 |
+| Onzas          | Peso del bebé al nacer en onzas                                                  |
+| Diaocu         | Día en que ocurrió el nacimiento                                                 |
+| Mesocu         | Mes en que ocurrió el nacimiento                                                 |
+| Añoocu         | Año en que ocurrió el nacimiento                                                 |
+| Sexo           | Sexo del bebé (1 = Hombre, 2 = Mujer)                                            |
+| Tipar          | Tipo de parto (1 = Vaginal, 2 = Cesárea, etc.)                                   |
+| Edadp          | Edad del padre en años                                                           |
+| Deprep         | Departamento de residencia del padre                                             |
+| Muprep         | Municipio de residencia del padre                                                |
+| Escivp         | Estado civil del padre                                                           |
+| Depnap         | Departamento de nacimiento del padre                                             |
+| Mupnap         | Municipio de nacimiento del padre                                                |
+| Naciop         | Nacionalidad del padre (código)                                                  |
+| Ocupap         | Ocupación del padre (según clasificación nacional)                               |
+| Edadm          | Edad de la madre en años                                                         |
+| Deprem         | Departamento de residencia de la madre                                           |
+| Muprem         | Municipio de residencia de la madre                                              |
+| Escivm         | Estado civil de la madre                                                         |
+| Depnam         | Departamento de nacimiento de la madre                                           |
+| Mupnam         | Municipio de nacimiento de la madre                                              |
+| Naciom         | Nacionalidad de la madre (código)                                                |
+| Ocupam         | Ocupación de la madre                                                            |
+| Escolap        | Nivel educativo alcanzado por el padre                                           |
+| Escolam        | Nivel educativo alcanzado por la madre                                           |
+| Paisrep        | País de residencia del padre                                                     |
+| Paisrem        | País de residencia de la madre                                                   |
+| Paisnacp       | País de nacimiento del padre                                                     |
+| Paisnacm       | País de nacimiento de la madre                                                   |
+| Asisrec        | Si hubo asistencia médica en el nacimiento                                       |
+| Sitioocu       | Lugar donde ocurrió el nacimiento (hospital, casa, etc.)                         |
+| TipoIns        | Tipo de institución que atendió el parto (si aplica)                             |
+| ViaPar / Viapar| Vía del parto (puede ser duplicado en nombre)                                    |
+| PuebloPP       | Pertenencia étnica del padre (pueblo indígena, mestizo, etc.)                    |
+| PuebloPM       | Pertenencia étnica de la madre                                                   |
+| Tohite         | Total de hijos tenidos                                                           |
+| Tohinm         | Total de hijos nacidos muertos                                                   |
+| Tohivi         | Total de hijos vivos                                                             |
+| grupetma       | Clasificación del grupo étnico de la madre (código)                              |
+| Gretnp         | Grupo étnico del padre                                                           |
+| Gretnm         | Grupo étnico de la madre                                                         |
+| Ciuopad        | Ciudad de nacimiento del padre (algunos años)                                    |
+| Ciuomad        | Ciudad de nacimiento de la madre (algunos años)                                  |
+| Munpnam        | Municipio de nacimiento de la madre (alternativa a munnam)                       |
+| archivo        | Nombre del archivo del cual se extrajo el dato                                   |
+| anio           | Año correspondiente al archivo (2009–2022)                                       |
+
+### b.	Realicen un resumen de las variables numéricas e investiguen si siguen una distribución normal y, para las variables categóricas obtengan una tabla de frecuencia, documenten lo que vayan encontrando.
+
+```{r}
+# 🔧 Filtrar valores atípicos y mantener datos consistentes
+datos_limpios <- datos_completos %>%
+  mutate(
+    Edadp  = as.numeric(Edadp),
+    Edadm  = as.numeric(Edadm),
+    Libras = as.numeric(Libras),
+    Onzas  = as.numeric(Onzas),
+    Tohite = as.numeric(Tohite),
+    Tohinm = as.numeric(Tohinm),
+    Tohivi = as.numeric(Tohivi)
+  ) %>%
+  filter(
+    Edadp >= 10 & Edadp <= 90,
+    Edadm >= 10 & Edadm <= 100,
+    Libras >= 1 & Libras <= 10,
+    Onzas >= 0 & Onzas <= 15,
+    Tohite >= 0 & Tohite <= 20,
+    Tohinm >= 0 & Tohinm <= 20,
+    Tohivi >= 0 & Tohivi <= 20
+  )
+
+# Importar las librerías necesarias
+library(dplyr)
+library(ggplot2)
+
+# Variables a analizar
+vars_numericas <- c("Edadp", "Edadm", "Libras", "Onzas", "Tohite", "Tohinm", "Tohivi")
+vars_categoricas <- c("Sexo", "Tipar", "Asisrec", "Sitioocu", "Escivp", "Escivm")
+
+# 📊 Resumen estadístico
+resumen_numerico <- datos_limpios %>%
+  select(all_of(vars_numericas)) %>%
+  summarise(across(everything(), list(
+    media = ~mean(., na.rm = TRUE),
+    mediana = ~median(., na.rm = TRUE),
+    sd = ~sd(., na.rm = TRUE),
+    min = ~min(., na.rm = TRUE),
+    max = ~max(., na.rm = TRUE)
+  ), .names = "{.col}_{.fn}"))
+
+print(resumen_numerico)
+
+# 📈 Histogramas (versión moderna de ggplot2 sin aes_string)
+for (var in vars_numericas) {
+  if (var %in% names(datos_limpios)) {
+    print(
+      ggplot(datos_limpios, aes(x = .data[[var]])) +
+        geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+        labs(title = paste("Distribución de", var), x = var, y = "Frecuencia")
+    )
+  }
+}
+
+# 📋 Tablas de frecuencia para variables categóricas
+for (var in vars_categoricas) {
+  if (var %in% names(datos_limpios)) {
+    cat("\n📊 Frecuencia de:", var, "\n")
+    print(table(datos_limpios[[var]], useNA = "ifany"))
+  }
+}
+
+```
+
+### Analisis de los Hallazgos
+
+Podemos ver que las edades medias y minimas son de 28 y 12 años, al igual que las libras medias son de 6.3 a 6 , lo cual es un indide de una poblacion relativamente joven . 
+
+Tambien vemos que conforme a los año esta media de libras se ido desplazando mas hacia la derecha, Y que la cantidad de personas a aumentado mas a la edades grandes , lo que puede indicar que los nacimientos hemos visto que la poblacion ha aumentado esto puede mostrar a que la poblacion se ha hecho mucho mas anciana pero tambien aumento el peso de los mismos . Ello es posible que sea fruto de un sesgo dado a que ahora hay muchos mas adultos que antes. 
+
+
+Tambien vemos que las onzas de los nacimientos se han visto distribuidos de una forma que no es normal, sino que puede deberse a datos atipicos que se ven sesgos en ambos extremos. 
+
+
+
+
+### c.	Crucen las variables que consideren sean las más importantes para hallar los elementos clave que permitan comprender lo que está causando el problema encontrado.
+
+```{r}
+# Librerías necesarias
+library(dplyr)
+library(ggplot2)
+library(scales)
+
+# Filtrar datos válidos
+datos_validados <- datos_completos %>%
+  mutate(
+    Edadm = as.numeric(Edadm),
+    Tipar = factor(Tipar, levels = c("1", "2", "3", "4"),
+                   labels = c("Vaginal", "Cesárea", "No especificado", "No aplica")),
+    Escolam = factor(Escolam, levels = c("1", "2", "3", "4", "5", "6"),
+                     labels = c("Ninguna", "Primaria", "Secundaria", "Diversificado", "Superior", "No especificado")),
+    Escivm = factor(Escivm, levels = c("1", "2", "3", "4", "5", "6"),
+                    labels = c("Soltera", "Casada", "Unida", "Separada", "Divorciada", "Viuda")),
+    Sitioocu = factor(Sitioocu, levels = c("1", "2", "3", "4", "5"),
+                      labels = c("Hospital público", "Hospital privado", "Centro de salud", "Domicilio", "Otro")),
+    Asisrec = factor(Asisrec, levels = c("1", "2", "3", "4"),
+                     labels = c("Médico", "Enfermera", "Partera", "Otro")),
+    grupo_edad = case_when(
+      Edadm < 20 ~ "Adolescente",
+      Edadm >= 20 & Edadm < 50 ~ "Adulta",
+      TRUE ~ NA_character_
+    )
+  ) %>%
+  filter(!is.na(grupo_edad))
+
+# 🔹 1. Distribución de edad vs tipo de parto
+ggplot(datos_validados, aes(x = Tipar, y = Edadm, fill = grupo_edad)) +
+  geom_boxplot(outlier.size = 0.8) +
+  labs(title = "Edad de la madre vs tipo de parto",
+       x = "Tipo de parto", y = "Edad de la madre") +
+  theme_minimal() +
+  facet_wrap(~grupo_edad)
+
+# 🔹 2. Tipo de parto según escolaridad (con etiquetas)
+df2 <- datos_validados %>%
+  group_by(grupo_edad, Escolam, Tipar) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(grupo_edad, Escolam) %>%
+  mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
+
+ggplot(df2, aes(x = Escolam, y = prop, fill = Tipar)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "white") +
+  facet_wrap(~grupo_edad) +
+  labs(title = "Tipo de parto según escolaridad de la madre",
+       x = "Escolaridad", y = "Proporción", fill = "Tipo de parto") +
+  scale_y_continuous(labels = percent_format()) +
+  theme_minimal()
+
+# 🔹 3. Estado civil vs escolaridad (con etiquetas)
+df3 <- datos_validados %>%
+  group_by(grupo_edad, Escivm, Escolam) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(grupo_edad, Escivm) %>%
+  mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
+
+ggplot(df3, aes(x = Escivm, y = prop, fill = Escolam)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "white") +
+  facet_wrap(~grupo_edad) +
+  labs(title = "Escolaridad según estado civil de la madre",
+       x = "Estado civil", y = "Proporción", fill = "Escolaridad") +
+  scale_y_continuous(labels = percent_format()) +
+  theme_minimal()
+
+# 🔹 4. Sitio del parto vs tipo de asistencia (con etiquetas)
+df4 <- datos_validados %>%
+  group_by(grupo_edad, Sitioocu, Asisrec) %>%
+  summarise(n = n(), .groups = "drop") %>%
+  group_by(grupo_edad, Sitioocu) %>%
+  mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
+
+ggplot(df4, aes(x = Sitioocu, y = prop, fill = Asisrec)) +
+  geom_bar(stat = "identity", position = "fill") +
+  geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "white") +
+  facet_wrap(~grupo_edad) +
+  labs(title = "Asistencia médica según sitio del parto",
+       x = "Sitio del parto", y = "Proporción", fill = "Asistencia") +
+  scale_y_continuous(labels = percent_format()) +
+  theme_minimal()
+```
+**1. Edad de la madre vs tipo de parto**
+
+Este gráfico es un **diagrama de caja (boxplot)** que muestra la relación entre la **edad de la madre** y el **tipo de parto**, **segmentada por grupo etario**: *Adolescente* (menores de 20 años) y *Adulta* (20 años o más). Vamos a desglosarlo:
+
+🟧 Eje horizontal (**Tipo de parto**):
+- **Vaginal**
+- **Cesárea**
+- **No especificado**
+- **No aplica**
+
+🟦 Eje vertical (**Edad de la madre**):
+- Rango desde los **10 años** hasta más de **45 años**.
+
+**Interpretación por grupo:**
+
+🔴 **Adolescentes (rojo):**
+
+- Sus edades están fuertemente concentradas entre **15 y 19 años**.
+- Para **todos los tipos de parto**, la mediana está cerca de los **17-18 años**.
+- Hay presencia de valores atípicos (*outliers*) menores a 15 años (algunas incluso de 10 a 12 años).
+- Las cajas son muy pequeñas porque la edad varía poco en este grupo.
+
+🟦 **Adultas (turquesa):**
+
+- Tienen una mayor dispersión de edades (de 20 hasta 50+ años).
+- La **mediana** de edad en partos vaginales es alrededor de **25 años**, mientras que en cesáreas y “no especificado” es más alta (27–30 años).
+- Hay más presencia de **outliers hacia arriba** (madres mayores).
+
+**Conclusiones que puedes sacar:**
+
+1. **Las adolescentes tienen partos a una edad muy temprana**, sin importar el tipo de parto.
+2. Las mujeres adultas presentan **más variedad en tipo de parto** y una **dispersión mayor en la edad**.
+3. Las **cesáreas y partos no especificados** tienden a estar más asociados con mujeres adultas (mediana más alta).
+4. El hecho de que las adolescentes tengan partos principalmente vaginales y con baja variación etaria **podría estar relacionado con falta de planificación familiar y acceso a servicios médicos diferenciados.**
+
+
+**2. Tipo de parto según escolaridad de la madre**
+
+Este gráfico **de barras apiladas y facetado por grupo de edad** muestra la **distribución proporcional del tipo de parto** (`Vaginal`, `Cesárea`, etc.) según la **escolaridad de la madre**, diferenciando entre madres **adolescentes** y **adultas**. a continuación se proporciona una explicación más detallada:
+
+**¿Qué observamos?**
+
+**Interpretación general:**
+
+- **Eje X (horizontal):** Niveles de escolaridad de la madre (`Escolam`), desde "Ninguna" hasta "Superior".
+- **Eje Y (vertical):** Proporción de partos por cada tipo, expresada como porcentaje del total de partos dentro de cada categoría de escolaridad.
+- **Colores:**  
+
+  - 🔴 Rojo: **Parto Vaginal**  
+  - 🟢 Verde: **Parto Cesárea**  
+  - 🔵 Azul: **No especificado**  
+  - 🟣 Morado: **No aplica** (aunque estos son casi invisibles o inexistentes en este gráfico)
+
+**Hallazgos importantes:**
+
+**Madres adolescentes:**
+
+- El **99%–100%** de los partos son vaginales sin importar el nivel de escolaridad.
+- Las cesáreas son **muy poco frecuentes** (solo 1%).
+- Esto puede deberse a:
+  - Menor acceso a servicios especializados.
+  - Menor probabilidad de embarazos planificados.
+  - Contextos más rurales o vulnerables.
+
+ **Madres adultas:**
+ 
+- También predominan los partos vaginales (97%–99%), pero:
+  - Hay una **ligera tendencia al aumento de cesáreas** con mayor escolaridad:
+    - Por ejemplo, en nivel **superior**, 2% de cesáreas.
+    - En "No especificado", sube al 3%.
+  - Esto podría reflejar:
+    - Mayor planificación.
+    - Mayor acceso a servicios médicos y partos programados.
+    - Preferencia médica/personal por cesáreas en algunos contextos.
+
+**Conclusión del gráfico:**
+
+- **El tipo de parto está fuertemente dominado por partos vaginales**, especialmente entre las madres adolescentes.
+- Las **madres adultas con mayor nivel educativo** presentan una leve mayor proporción de partos por cesárea.
+- Este patrón **sugiere diferencias en el acceso a servicios de salud o en las decisiones clínicas según edad y escolaridad**.
+
+**3. Escolaridad según estado civil de la madre**
+
+Este gráfico muestra la **relación entre el estado civil y la escolaridad de la madre**, diferenciando entre madres **adolescentes** y **adultas**, con proporciones expresadas en porcentajes.
+
+**Detalles del gráfico:**
+
+- **Eje X (horizontal):** Estado civil de la madre (`Escivm`): Soltera, Casada, Unida, NA.
+- **Eje Y (vertical):** Proporción de cada nivel de escolaridad.
+- **Colores:** Representan los distintos niveles educativos (`Escolam`) desde "Ninguna" hasta "Superior", y se incluye el grupo "NA" (dato faltante).
+- **Facetado:** Dos paneles:
+  - Izquierda: madres **adolescentes**
+  - Derecha: madres **adultas**
+- **Texto sobre cada barra:** porcentaje de cada grupo educativo dentro de cada categoría de estado civil.
+
+**Madres adolescentes:**
+
+- **Alta proporción de NA (desconocido)** en madres **unidas (70%)** y **NA (47%)**, lo que limita el análisis en estos grupos.
+- Entre **solteras y casadas**, hay mayor claridad:
+  - ~27% de madres adolescentes solteras tienen **escolaridad primaria** y otro 27% sin escolaridad.
+  - Solo el 4–5% alcanza **diversificado o superior**.
+- Casadas tienen **ligeramente más escolaridad secundaria y diversificada**.
+
+**Conclusión:** Las madres adolescentes tienden a tener **niveles educativos bajos** (ninguno o primaria), con muy pocos casos de escolaridad media o superior.
+
+**Madres adultas:**
+
+- Mayor diversidad educativa:
+  - Aunque todavía predominan los niveles bajos (Ninguna y Primaria con 27%+), se observa mayor presencia de **secundaria (13–14%)** y **diversificado (11–13%)**.
+  - Algunas casadas tienen hasta 2% con **educación superior**.
+- Las mujeres unidas y solteras tienen escolaridades más bajas comparadas con las casadas.
+
+**Conclusión:** Las madres adultas presentan **mejor perfil educativo**, especialmente en el grupo casado.
+
+**Reflexión clave:**
+
+- Existe una **relación entre estado civil y escolaridad**: las madres casadas (tanto adolescentes como adultas) tienden a tener **más educación**.
+- Las madres adolescentes **unidas o con datos faltantes** tienen niveles de escolaridad extremadamente bajos o desconocidos.
+
+**4. Asistencia médica según sitio del parto**
+
+Este gráfico muestra la **relación entre el sitio del parto y el tipo de asistencia médica recibida**, desagregada por grupo etario de la madre (adolescente vs adulta), y expresada en **proporciones porcentuales**.
+
+**Ejes y elementos clave:**
+
+- **Eje X:** Sitio del parto (`Sitioocu`): Hospital público, Hospital privado, Centro de salud, Domicilio, Otro, NA.
+- **Eje Y:** Proporción de cada tipo de asistencia médica (`Asisrec`): Médico, Enfermera, Partera, Otro.
+- **Colores:** Representan el tipo de asistencia médica.
+- **Facetado:** Se comparan **madres adolescentes** y **madres adultas**.
+- **Etiquetas:** Indican el **porcentaje exacto** que representa cada grupo dentro del total por barra.
+
+**Madres adolescentes:**
+
+- **Hospital público:** 100% con asistencia médica profesional (100% médico).
+- **Hospital privado:** 98% médico, 1% enfermera.
+- **Centro de salud:** 82% médico, pero hay mayor diversidad (2% enfermera, 3% partera, etc.).
+- **Domicilio:** 62% asistidas por **enfermeras**, 29% por médico, 4% por partera.
+- **Otros sitios:** Mayor fragmentación, con 40% partera, 20% otro, y 26% NA (no especificado).
+- **NA (sitio desconocido):** 60% asistencia tipo "Otro", 31% enfermera.
+
+**Conclusión:** Las madres adolescentes que no dan a luz en hospitales tienen mayor probabilidad de ser atendidas por **personal no médico** o incluso parteras.
+
+**Madres adultas:**
+
+- **Hospital público:** 100% médico.
+- **Hospital privado:** 99% médico.
+- **Centro de salud:** 84% médico, pero aparece algo más de asistencia por parteras y enfermeras.
+- **Domicilio:** 54% médico, 40% **enfermera**, 3% partera.
+- **Otros sitios y NA:** distribución similar a adolescentes, pero con más casos asistidos por **parteras (43%)** y "Otro".
+
+**Conclusión:** Aunque las madres adultas también recurren a lugares no institucionales, su proporción de **asistencia médica es mayor** que en las adolescentes.
+
+**Reflexión general:**
+
+- **Los hospitales (públicos y privados)** garantizan asistencia médica profesional.
+- **Los partos en domicilio o sitios alternativos** se asocian con mayor riesgo de **no recibir atención médica profesional**, especialmente en adolescentes.
+- Esto puede estar relacionado con factores como **baja escolaridad, falta de acceso a servicios o decisiones familiares**.
+
+
+
+
+
+
+## d.	Realicen gráficos exploratorios que les dé ideas del estado de los datos.
+
+
+Para hacer este analisis debemos de profundizar sobre los datos, Por ello vamos a utilizar algunas graficos que representen lo que estamos buscando
+
+Lo primero es responder a las preguntas por ejemplo
+
+¿El sexo del bebé influye en el peso al nacer?
+
+Para ello realizamos el siguiente grafico
+
+
+
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+ruta <- "./datos_nacimientos_de_2009_a_2022.RData"
+
+# Cargar el archivo RData
+load(ruta)
+
+
+# Crear una nueva variable con el peso total en onzas sin modificar Libras y Onzas originales
+datos_limpios <- datos_completos %>%
+  mutate(
+    Edadp  = as.numeric(Edadp),
+    Edadm  = as.numeric(Edadm),
+    Libras = as.numeric(Libras),
+    Onzas  = as.numeric(Onzas),
+    Tohite = as.numeric(Tohite),
+    Tohinm = as.numeric(Tohinm),
+    Tohivi = as.numeric(Tohivi)
+  ) %>%
+  filter(
+    Edadp >= 10 & Edadp <= 90,
+    Edadm >= 10 & Edadm <= 100,
+    Libras >= 1 & Libras <= 10,
+    Onzas >= 0 & Onzas <= 15,
+    Tohite >= 0 & Tohite <= 20,
+    Tohinm >= 0 & Tohinm <= 20,
+    Tohivi >= 0 & Tohivi <= 20
+  )
+
+
+
+datos_cambiados <- datos_limpios %>% 
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+
+# 📊 Gráfico de caja para comparar peso por sexo
+ggplot(datos_cambiados, aes(x = Sexo, y = Peso_Onzas, fill = Sexo)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Distribución del Peso al Nacer por Sexo",
+       x = "Sexo del Bebé",
+       y = "Peso al Nacer (Onzas)") +
+  scale_fill_manual(values = c("blue", "pink")) +  # Colores típicos
+  theme_minimal()
+
+
+
+
+
+
+
+
+```
+
+### Analisis del grafico
+Podemos ver que realmente no afecta en nada el genero en la diferencia de pesos, si se puede ver que solo hay una ligera diferencia de pesos por las mujeres pesando menos pero no es mucho. Asi que puede ser por otros motivos
+
+
+
+Otra forma para poder ver que esta afectando el peso de los bebes puede ser la edad en las que sus madres los tuvieorn. 
+Por ello vamos a hacer el siguiente grafico
+
+
+
+
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+# Etiquetas para tipo de parto
+etiquetas_tipar <- c("1" = "Vaginal", "2" = "Cesárea", "3" = "No especificado", "4" = "No aplica")
+
+# Variables que interesan
+vars_numericas <- c("Edadp", "Libras", "Onzas")
+vars_categoricas <- c("Sexo", "Escivp", "Escolap", "Asisrec", "Sitioocu")
+
+tryCatch({
+  # Convertir manualmente Tipar con etiquetas
+  if ("Tipar" %in% names(datos_limpios)) {
+    datos_limpios$Tipar <- as.character(datos_limpios$Tipar)
+    datos_limpios$Tipar <- recode(datos_limpios$Tipar, !!!etiquetas_tipar)
+    datos_limpios$Tipar <- factor(datos_limpios$Tipar)
+  }
+
+  # Convertir variables numéricas
+  datos_limpios <- datos_limpios %>%
+    mutate(
+      Edadp = suppressWarnings(as.numeric(as.character(Edadp))),
+      Libras = suppressWarnings(as.numeric(as.character(Libras))),
+      Onzas = suppressWarnings(as.numeric(as.character(Onzas))),
+      peso_total = Libras + (Onzas / 16)  # Calcular peso total en libras
+    )
+
+  # Convertir categóricas a factor si existen
+  for (var in vars_categoricas) {
+    if (var %in% names(datos_limpios)) {
+      datos_limpios[[var]] <- as.factor(as.character(datos_limpios[[var]]))
+    }
+  }
+
+  # Filtrar valores válidos
+  datos_limpios <- datos_limpios %>%
+    filter(Edadp < 90, Libras <= 10, Onzas <= 15)
+
+  # 📊 Peso vs Edad de la madre
+  if ("Edadp" %in% names(datos_limpios) && "peso_total" %in% names(datos_limpios)) {
+    print(ggplot(datos_limpios, aes(x = Edadp, y = peso_total)) +
+            geom_point(color = "steelblue", alpha = 0.6) +
+            labs(title = "Relación entre Edad de la madre y Peso al nacer",
+                 x = "Edad de la madre (años)", y = "Peso al nacer (libras)") +
+            theme_minimal())
+  }
+
+  gc()
+
+}, error = function(e) {
+  message("❌ Error: ", e$message)
+})
+
+
+```
+
+
+### Analisis del grafico
+
+Podemos ver que la mayor concentracion de los pesos es en 6  de kilos, y tambien que las madres que mas son las que tienen estos bebes son madres mucho mas grandes. De hecho se ve que las jovenes suelen dar a luz un rango de bebes mas pesados. Pero mientras mas jovenes tambien se ve que los pesos de los bebes suelen ser menos pesados al igual que las mas grandes. 
+
+Esto producto a que las madres jovenes y mas grandes suelen tener mas problemas en el tiempo de gestacion ya sea por prematura o ser demasiado grandes al tener su hijo , lo que provoca nacimientos prematuros . 
+
+
+
+
+
+Sabiendo lo anterior podemos plantear la pregunta
+
+### Cuantos embarazos se pueden catalogar como adolescentes.
+
+Para ello realizamos el siguiente grafico. 
+
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Definir el límite de edad para embarazo adolescente
+limite_edad <- 20
+
+# Filtrar datos de embarazos adolescentes
+datos_adolescentes <- datos_limpios %>%
+  mutate(Embarazo_Adolescente = ifelse(Edadp < limite_edad, "Adolescente", "No Adolescente")) %>%
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+
+# 📊 Gráfico de caja comparando el peso de los bebés según embarazo adolescente o no
+ggplot(datos_adolescentes, aes(x = Embarazo_Adolescente, y = Peso_Onzas, fill = Embarazo_Adolescente)) +
+  geom_boxplot(alpha = 0.7) +
+  labs(title = "Distribución del Peso al Nacer según Embarazo Adolescente",
+       x = "Tipo de Embarazo",
+       y = "Peso al Nacer (Onzas)") +
+  scale_fill_manual(values = c("red", "green")) +  # Colores personalizados
+  theme_minimal()
+
+```
+
+
+
+Aqui si podemos ver que la media de los embarazos no adolescentes son menor a los que no lo son, aunque se observa que realmente no es tanta la diferencia entre ambos tipos de embarazos. Pero tambien podemos notar que si existen mas niños con menor peso que al no ser madres adolescentes las progenitoras. Esto puede indicar una correlacion entre el peso y salud de los niños con respecto a  la edad de las madres. 
+
+Esto tiene sentido, al ser madres adolescentes, puede ser que debido a la naturaleza de no llegar a  su etapa adulta , tengan complicaciones y provoquen que los niños nazcan de manera prematura. 
+
+Por lo que conociendo esto podemos ponernos a preguntar  lo siguiente. 
+
+#### Ha habido un aumento o disminucion de los embarazos adolescentes. 
+
+Esto nos queremos preguntar para ver si ha crecido o si se ha mantenido o decrecido los ultimos años los embarazos adolescentes. 
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# Definir el límite de edad para embarazo adolescente
+limite_edad <- 20
+
+
+
+# Contar el número de embarazos adolescentes por año
+evolucion_embarazos <- datos_limpios %>%
+  filter(Edadp < limite_edad) %>%
+  group_by(anio) %>%
+  summarise(Total_Adolescentes = n())
+
+# 📊 Gráfico de evolución
+ggplot(evolucion_embarazos, aes(x = anio, y = Total_Adolescentes)) +
+  geom_line(color = "blue", size = 1) +
+  geom_point(color = "red", size = 2) +
+  labs(title = "Evolución de los Embarazos Adolescentes por Año",
+       x = "Año",
+       y = "Número de Embarazos Adolescentes") +
+  theme_minimal()
+
+```
+
+
+#### Analisis
+
+Podemos ver que si hay un decremento en la cantidad de embarazos adolescentes, aunque se ha visto un crecimiento en los ultimos 3 años si se toma a perspectiva se puede observar que realmente ha disminuido drasticamente. Esto es normal en la mayoria de sociedades actualmente ya que debido al nivel de escolaridad que ya investigamos con anterioridad , y a la generalizacion de la informacion posiblemente muchas mujeres conocen los riegos de un embarazo de este estilo. 
+
+
+Ello indica una metrica bastante buena. Vemos que si realmente se ha visto un cambio en la manera de pensar de muchos jovenes, pero aun asi si hay un alza de embarazos adolescentes, Lo que podemos hacer es investigar porque sucede esto. Puede ser por temas sociales, culturales y hasta economicos actuales. 
+
+
+Por ello nos vamos a hacer la siguiente pregunta de analisis. 
+
+
+#### Cuantos embarazos adolescentes hay por departamento. 
+
+Hacemos esto para primero ver el contexto de ubicacion para cada mama. 
+
+
+Para ello hacemos la siguiente grafica. 
+
+
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Contar el número de nacimientos por departamento
+nacimientos_por_departamento <- datos_limpios %>%
+  group_by(Deprem) %>%
+  summarise(Total_Nacimientos = n()) %>%
+  arrange(desc(Total_Nacimientos))  # Ordenar de mayor a menor
+
+# 📊 Gráfico de barras del número de nacimientos por departamento
+ggplot(nacimientos_por_departamento, aes(x = reorder(Deprem, -Total_Nacimientos), y = Total_Nacimientos, fill = Deprem)) +
+  geom_bar(stat = "identity", alpha = 0.8, show.legend = FALSE) +
+  labs(title = "Número de Nacimientos por Departamento de Residencia",
+       x = "Departamento",
+       y = "Número de Nacimientos") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar nombres de departamentos para mejor lectura
+
+
+```
+
+
+
+#### Analisis
+
+Usaremos la codificacion de INE sobre los departamentos de guatemala. 
+
+
+Podemos ver que el departamento con mayor numero de nacimientos adolescentes es el departamento de Guatemala seguido por Huehuetenango y de Alta Verapaz Lo que nos indica que sons estos 2 lugares en los que pueden estar ocurriendo condiciones que provoquen una gran cantidad de nacimientos adolescentes.
+
+Esto va a ser si execeptuamos Guatemala, porque los departamentos mas poblados son Guatemala y Huehuetenango lo cual los dejaria descartado pero Alta Verapaz es el que no tiene una gran cantidad de habitantes y aun asi tiene una gran cantidad de embarazos adolescentes. 
+
+
+Conociendo el contexto de la ubicacion de la madre queremos ver tambien el contexto familiar de la madre. Esto nos lleva a realizar la siguiente busqueda. 
+
+#### Estado civil madre 
+
+Para ello vamos a ver  el estado de la madres adolescentes
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# Contar el número de nacimientos por estado civil de la madre
+nacimientos_por_estado_civil <- datos_limpios %>%
+  group_by(Escivm) %>%
+  summarise(Total_Nacimientos = n()) %>%
+  arrange(desc(Total_Nacimientos))  # Ordenar de mayor a menor
+
+# 📊 Gráfico de barras del número de nacimientos por estado civil
+ggplot(nacimientos_por_estado_civil, aes(x = reorder(Escivm, -Total_Nacimientos), y = Total_Nacimientos, fill = Escivm)) +
+  geom_bar(stat = "identity", alpha = 0.8, show.legend = FALSE) +
+  labs(title = "Número de Nacimientos por Estado Civil de la Madre",
+       x = "Estado Civil",
+       y = "Número de Nacimientos") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar nombres para mejor lectura
+
+```
+
+#### Analisis
+
+El estado civil 1 es soltera, el estado civil 2 es casa y el estado 3 es Unida  Podemos ver que una gran parte de las madres adolescentes son solteras, muy posiblemente debido a que aun no ha habido un casamiento o el padre esta ausente. Pero de manera alarmante podemos ver que una gran parte de los casamientos son de casadas. y si hacemos una exploracion mas profunda. 
+
+```{r}
+# Filtrar datos para encontrar la madre más joven con estado civil "2"
+madre_menor_edad_estado_2 <- datos_limpios %>%
+  filter(Escivm == 2) %>%  # Filtrar por estado civil "2"
+  filter(Edadp == min(Edadp, na.rm = TRUE))  # Filtrar por la menor edad
+
+# Imprimir la edad de la madre con menor edad y estado civil "2"
+cat("📌 La madre con menor edad y estado civil 2 tiene:", madre_menor_edad_estado_2$Edadp, "años.\n")
+
+```
+
+Vemos que la madre con menor edad y que esta casada tan solo tiene 13 años. Esto es una cifra alarmante y nos sirve para dar una contextualizacion de porque suelen ocurrir estos embarazos, ya sea por un abuso, o por irresponsabilidad de los padres o otros temas que no hemos estado contando aqui mismo. 
+
+Hasta este momento hemos definido que una gran cantidad de madres son adolescentes y si bien se ha visto un decremento en estos embarazos, en los ultimos años ha habido un aumento y que en una gran parte de estos suelen suceder en departamentos historicamente aislados , y que una gran parte de las madres son casadas. 
+
+Pero tambien queremos ver el acceso a hospitales tanto para  madres adolescentes como no. Ello nos explicaria el contexto economico de la misma y asi darnos una idea de los nacimientos en Guatemala. 
+
+
+#### Acceso a hospitales por madres adolescentes .
+
+```{r}
+
+library(ggplot2)
+library(dplyr)
+
+# Filtrar datos para embarazos adolescentes y no adolescentes
+datos_adolescente_vs_no <- datos_limpios %>%
+  mutate(Embarazo_Adolescente = ifelse(Edadp < 20, "Adolescente", "No Adolescente")) %>%
+  mutate(Asistencia_Medica = case_when(
+    Asisrec == 1 ~ "Sí",
+    Asisrec %in% c(2, 4, 5) ~ "No",
+    TRUE ~ NA_character_  # Ignorar valores desconocidos o no aplicables
+  )) %>%
+  filter(!is.na(Asistencia_Medica))  # Filtrar valores desconocidos
+
+# 📊 Gráfico de barras para asistencia médica según edad de la madre
+ggplot(datos_adolescente_vs_no, aes(x = Embarazo_Adolescente, fill = Asistencia_Medica)) +
+  geom_bar(position = "dodge", alpha = 0.8) +
+  labs(title = "Asistencia Médica en el Nacimiento por Edad de la Madre",
+       x = "Tipo de Embarazo",
+       y = "Número de Nacimientos",
+       fill = "Asistencia Médica") +
+  scale_fill_manual(values = c("green", "red"), labels = c("Sí", "No")) +  
+  theme_minimal()
+
+
+```
+
+
+
+#### Analisis
+
+Podemos ver que la mayoria de veces tanto en mujers no adolescentes como no , la mayoria no recibe atencion medica durante el parto, pero se puede observar que la diferencia entre mujeres no adolescentes es mas evidente, muy posiblemente debido a que un embarazo de este estilo es mas peligroso que uno normal y por ende se suelen practicar este tipo de cosas para evitar problemas. 
+
+
+Esto es un indicativo de lo riesgoso que puede ser un parte tal asi , por ende nos podemos hacer la siguiente pregunta de analisis para completar nuestro analisis exploratorio. 
+
+
+#### Las madres jovenes que tanta diferencia tenian con los padres de los niños ?
+
+
+
+Para esto hacemos una analisis de edad 
+
+
+```{r}
+library(ggplot2)
+
+# 📊 Gráfico de densidad de la diferencia de edad entre padres y madres
+ggplot(datos_cambiados, aes(x = Diferencia_Edad)) +
+  geom_density(fill = "blue", alpha = 0.5) +
+  labs(title = "Distribución de la Diferencia de Edad entre Padres y Madres",
+       x = "Diferencia de Edad (Padre - Madre)",
+       y = "Densidad") +
+  theme_minimal()
+
+
+
+```
+
+
+#### Analisis de los Datos
+
+
+Podemos ver que la diferencia de edad entre los padres es bastante alto la mayoria de 5 a 10 años. Aunque se ve que una gran parte tambien son de mayor a 10 años. Esto puede ser una demostracion de un ambiente abusivo e incluso en muchos casos hasta ilegal, recordemos que la mayoria son mujeres entre 14 y 17 y una diferencia de 5 o 10 años ya te hace un adulto. 
+
+
+
+
+Como ultimo punto queremos ver cuales son los grupos etnicos mas afectados por recibir poca atencion, y especificamente en la poblacion de madres adolescentes. Cual de todos los grupos etnicos tiene mayor cantidad de madres adolescentes .  
+
+
+
+```{r}
+# Filtrar solo madres menores de edad
+madres_adolescentes <- datos_cambiados %>%
+  filter(Edadm < 18) %>%
+  count(Gretnm)  # Contar cantidad de casos por grupo étnico
+
+# 📊 Gráfico de barras
+ggplot(madres_adolescentes, aes(x = reorder(Gretnm, -n), y = n, fill = Gretnm)) +
+  geom_bar(stat = "identity", alpha = 0.7) +
+  labs(title = "Cantidad de Madres Adolescentes por Grupo Étnico",
+       x = "Grupo Étnico de la Madre",
+       y = "Cantidad de Madres Adolescentes") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
+  scale_fill_brewer(palette = "Set3", guide = "none") +
+  ylim(0, 20000)  # Ajusta este valor según la escala que necesites
+
+
+```
+
+
+#### Analisis 
+
+Podemos ver que el grupo etnico con mas madres adolescentes es el maya siendo el 1, siguiendole el Garifuna  y el mestizo no presentandose en la grafica de forma aparente, lo que demuestra que uno de los grupos mas vulnerables para ser madres adolescentes es el maya 
+
+
+## Conclusiones
+Esto va muy en la linea si nos ponemos a pensar en lo que hemos analizado, pues vimos que el departamento de Alta Verapaz tiene una gran cantidad de madres adolescentes, y siendo el maya el grupo etnico mas comun puede ser debido a la zona en donde se encuentra mas . Tambien se observo que si bien la diferencia de edad no es tan grande en madres adolescentes si es muy significativa y en algunos casos hasta ilegal. 
+
+
+Obervamos que muchos de las madres adolescentes no reciben atencion medica al momento de dar a luz, pero es mucho mayor el porcentaje que las que no debiedo a las complicaciones de este embarazo, tambien se observo que existe cierta correelacion entre el peso de los bebes nacidos y de la edad de sus madres mostrando que muy posiblemente madres muy jovenes provoquen el nacimiento de bebes prematuros.
+
+
+### e.	Hagan un agrupamiento “clustering” e interpreten los resultados. 
+
+```{r}
+
+```
+
+
+## 2. Una vez hayan explorado los datos...
+
+### a.	Describan la situación problemática que los lleva a plantear un problema a resolver.
+
+```{r}
+
+```
+
+### b.	Enuncien un problema científico y unos objetivos preliminares.
+
+```{r}
+
+```
+
+### c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
+
+```{r}
+
+```
+
+### d.	Escriban unas conclusiones con los hallazgos encontrados durante el análisis exploratorio. 
+
+```{r}
+
+```
+
