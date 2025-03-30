@@ -1407,41 +1407,55 @@ ggplot(datos_adolescentes, aes(x = Embarazo_Adolescente, y = Peso_Onzas, fill = 
   - ¿Cómo ha evolucionado la tasa de embarazos adolescentes a lo largo del tiempo?
   - ¿Existen diferencias en el acceso a salud prenatal según edad?
 
-Por lo que conociendo esto podemos ponernos a preguntar  lo siguiente. 
+Por lo que conociendo esto podemos ponernos a preguntar lo siguiente... 
 
-#### Ha habido un aumento o disminucion de los embarazos adolescentes. 
+**¿Ha habido un aumento o disminucion de los embarazos adolescentes?** 
 
 Esto nos queremos preguntar para ver si ha crecido o si se ha mantenido o decrecido los ultimos años los embarazos adolescentes. 
 
 ```{r}
-
 library(ggplot2)
 library(dplyr)
 
-# Definir el límite de edad para embarazo adolescente
+# Cargar archivo con los datos
+load("datos_nacimientos_de_2009_a_2022.RData")  # Asegúrate de que esté en tu directorio actual
+
+# Detectar automáticamente el data frame dentro del RData
+obj <- ls()[sapply(ls(), function(x) is.data.frame(get(x)))]
+if (length(obj) == 0) stop("❌ No se encontró ningún data frame cargado.")
+datos_limpios <- get(obj[1])  # Usar el primer data frame detectado
+
+# Asegurarse de que 'anio' esté correctamente definido y como numérico
+if (!"anio" %in% names(datos_limpios)) stop("❌ La variable 'anio' no está presente en los datos.")
+datos_limpios <- datos_limpios %>%
+  mutate(
+    anio = as.numeric(as.character(anio)),
+    Edadp = as.numeric(as.character(Edadp))
+  )
+
+# Definir límite para embarazo adolescente (<20 años)
 limite_edad <- 20
 
-
-
-# Contar el número de embarazos adolescentes por año
+# Agrupar por año
 evolucion_embarazos <- datos_limpios %>%
-  filter(Edadp < limite_edad) %>%
+  filter(!is.na(anio), Edadp < limite_edad) %>%
   group_by(anio) %>%
-  summarise(Total_Adolescentes = n())
+  summarise(Total_Adolescentes = n(), .groups = "drop")
 
-# 📊 Gráfico de evolución
+# 📊 Gráfico
 ggplot(evolucion_embarazos, aes(x = anio, y = Total_Adolescentes)) +
   geom_line(color = "blue", size = 1) +
   geom_point(color = "red", size = 2) +
-  labs(title = "Evolución de los Embarazos Adolescentes por Año",
-       x = "Año",
-       y = "Número de Embarazos Adolescentes") +
+  labs(
+    title = "Evolución de los Embarazos Adolescentes por Año",
+    subtitle = "Comparación anual de casos (< 20 años)",
+    x = "Año",
+    y = "Número de Embarazos Adolescentes"
+  ) +
   theme_minimal()
-
 ```
 
-
-#### Analisis
+**Analisis**
 
 Podemos ver que si hay un decremento en la cantidad de embarazos adolescentes, aunque se ha visto un crecimiento en los ultimos 3 años si se toma a perspectiva se puede observar que realmente ha disminuido drasticamente. Esto es normal en la mayoria de sociedades actualmente ya que debido al nivel de escolaridad que ya investigamos con anterioridad , y a la generalizacion de la informacion posiblemente muchas mujeres conocen los riegos de un embarazo de este estilo. 
 
@@ -1452,7 +1466,7 @@ Ello indica una metrica bastante buena. Vemos que si realmente se ha visto un ca
 Por ello nos vamos a hacer la siguiente pregunta de analisis. 
 
 
-#### Cuantos embarazos adolescentes hay por departamento. 
+**¿Cuantos embarazos adolescentes hay por departamento?**
 
 Hacemos esto para primero ver el contexto de ubicacion para cada mama. 
 
@@ -1465,67 +1479,190 @@ Para ello hacemos la siguiente grafica.
 library(ggplot2)
 library(dplyr)
 
-# Contar el número de nacimientos por departamento
-nacimientos_por_departamento <- datos_limpios %>%
+# Cargar archivo con los datos
+load("datos_nacimientos_de_2009_a_2022.RData")
+
+# Detectar automáticamente el data frame dentro del RData
+obj <- ls()[sapply(ls(), function(x) is.data.frame(get(x)))]
+if (length(obj) == 0) stop("❌ No se encontró ningún data frame cargado.")
+datos_limpios <- get(obj[1])  # Usar el primer data frame detectado
+
+# Diccionario INE para convertir código a nombre de departamento
+departamentos_ine <- c(
+  "1" = "Guatemala", "2" = "El Progreso", "3" = "Sacatepéquez", "4" = "Chimaltenango",
+  "5" = "Escuintla", "6" = "Santa Rosa", "7" = "Sololá", "8" = "Totonicapán",
+  "9" = "Quetzaltenango", "10" = "Suchitepéquez", "11" = "Retalhuleu", "12" = "San Marcos",
+  "13" = "Huehuetenango", "14" = "Quiché", "15" = "Baja Verapaz", "16" = "Alta Verapaz",
+  "17" = "Petén", "18" = "Izabal", "19" = "Zacapa", "20" = "Chiquimula",
+  "21" = "Jalapa", "22" = "Jutiapa"
+)
+
+# Datos de población aproximados por departamento (ajustar si se tiene fuente oficial)
+poblacion_departamental <- c(
+  "Guatemala" = 3400000, "El Progreso" = 200000, "Sacatepéquez" = 330000, "Chimaltenango" = 615000,
+  "Escuintla" = 800000, "Santa Rosa" = 400000, "Sololá" = 550000, "Totonicapán" = 450000,
+  "Quetzaltenango" = 830000, "Suchitepéquez" = 600000, "Retalhuleu" = 400000, "San Marcos" = 1080000,
+  "Huehuetenango" = 1200000, "Quiché" = 1000000, "Baja Verapaz" = 300000, "Alta Verapaz" = 1300000,
+  "Petén" = 800000, "Izabal" = 500000, "Zacapa" = 250000, "Chiquimula" = 400000,
+  "Jalapa" = 250000, "Jutiapa" = 500000
+)
+
+# Procesamiento
+datos_limpios <- datos_limpios %>%
+  mutate(
+    Edadp = as.numeric(as.character(Edadp)),
+    Deprem = recode(as.character(Deprem), !!!departamentos_ine)
+  ) %>%
+  filter(!is.na(Edadp) & Edadp < 20)  # Solo embarazos adolescentes
+
+# Contar nacimientos adolescentes por departamento
+embarazos_adolescentes <- datos_limpios %>%
   group_by(Deprem) %>%
-  summarise(Total_Nacimientos = n()) %>%
-  arrange(desc(Total_Nacimientos))  # Ordenar de mayor a menor
+  summarise(Total_Adolescentes = n(), .groups = "drop") %>%
+  filter(!is.na(Deprem)) %>%
+  mutate(
+    Poblacion = poblacion_departamental[Deprem],
+    Tasa_por_mil = round((Total_Adolescentes / Poblacion) * 1000, 2)
+  ) %>%
+  arrange(desc(Tasa_por_mil))
 
-# 📊 Gráfico de barras del número de nacimientos por departamento
-ggplot(nacimientos_por_departamento, aes(x = reorder(Deprem, -Total_Nacimientos), y = Total_Nacimientos, fill = Deprem)) +
+# 📊 Gráfico de tasas
+ggplot(embarazos_adolescentes, aes(x = reorder(Deprem, -Tasa_por_mil), y = Tasa_por_mil, fill = Deprem)) +
   geom_bar(stat = "identity", alpha = 0.8, show.legend = FALSE) +
-  labs(title = "Número de Nacimientos por Departamento de Residencia",
-       x = "Departamento",
-       y = "Número de Nacimientos") +
+  labs(
+    title = "Tasa de Embarazos Adolescentes por Departamento",
+    subtitle = "Por cada mil habitantes",
+    x = "Departamento",
+    y = "Tasa de Nacimientos (Adolescentes)"
+  ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar nombres de departamentos para mejor lectura
-
-
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-
-
-#### Analisis
+**Analisis**
 
 Usaremos la codificacion de INE sobre los departamentos de guatemala. 
 
 
-Podemos ver que el departamento con mayor numero de nacimientos adolescentes es el departamento de Guatemala seguido por Huehuetenango y de Alta Verapaz Lo que nos indica que sons estos 2 lugares en los que pueden estar ocurriendo condiciones que provoquen una gran cantidad de nacimientos adolescentes.
+📊 **Análisis de la Tasa de Embarazos Adolescentes por Departamento**
 
-Esto va a ser si execeptuamos Guatemala, porque los departamentos mas poblados son Guatemala y Huehuetenango lo cual los dejaria descartado pero Alta Verapaz es el que no tiene una gran cantidad de habitantes y aun asi tiene una gran cantidad de embarazos adolescentes. 
+El gráfico muestra la **tasa de embarazos adolescentes** por cada mil habitantes en los distintos departamentos de Guatemala, con base en los nacimientos registrados entre 2009 y 2022.
 
+🔍 Observaciones clave:
 
-Conociendo el contexto de la ubicacion de la madre queremos ver tambien el contexto familiar de la madre. Esto nos lleva a realizar la siguiente busqueda. 
+1. **Huehuetenango**, **Jalapa** y **San Marcos** son los departamentos con **las tasas más altas**, superando los **25 embarazos adolescentes por cada 1,000 habitantes**, lo cual evidencia una mayor prevalencia relativa de embarazos en menores de 20 años.
 
-#### Estado civil madre 
+2. **Alta Verapaz**, a pesar de tener una gran población, no se encuentra entre los más altos en tasa proporcional, lo que indica que **una alta cantidad de nacimientos no necesariamente implica alta tasa** si se ajusta por población.
+
+3. **Guatemala** y **El Progreso** presentan **las tasas más bajas**, con menos de 15 embarazos adolescentes por cada mil habitantes, lo cual puede estar relacionado con mayor acceso a educación, salud sexual y reproductiva, o estilos de vida urbanos.
+
+4. Aparecen categorías “23” y “99”, lo cual sugiere que **hay datos con códigos no mapeados a departamentos**, posiblemente nacimientos con departamento no especificado o mal codificado. Estos deben **limpiarse o categorizarse como “Desconocido”** si se desea conservarlos.
+
+✅ Conclusiones:
+
+- Ajustar los nacimientos por población permite un análisis **más justo y comparativo**, eliminando el sesgo de los departamentos con mayor número de habitantes.
+  
+- **Existe una disparidad territorial clara**: los departamentos rurales o con menor acceso a servicios (como Huehuetenango o Jalapa) tienen tasas más elevadas, lo cual sugiere brechas en educación sexual, acceso a anticonceptivos o condiciones culturales.
+
+- Estos resultados son útiles para que **políticas públicas y programas sociales** puedan focalizar esfuerzos en los departamentos con mayor tasa proporcional, priorizando educación y prevención.
+
+Conociendo el contexto de la ubicacion de la madre queremos ver tambien el contexto familiar de la madre. Esto nos lleva a realizar la siguiente busqueda... 
+
+**Estado civil madre**
 
 Para ello vamos a ver  el estado de la madres adolescentes
 
 ```{r}
-
 library(ggplot2)
 library(dplyr)
 
-# Contar el número de nacimientos por estado civil de la madre
+# Cargar el archivo RData
+ruta <- "./datos_nacimientos_de_2009_a_2022.RData"
+load(ruta)
+
+# Limpiar y convertir tipos numéricos + filtrar valores válidos
+datos_limpios <- datos_completos %>%
+  mutate(
+    Edadp  = as.numeric(Edadp),
+    Edadm  = as.numeric(Edadm),
+    Libras = as.numeric(Libras),
+    Onzas  = as.numeric(Onzas),
+    Tohite = as.numeric(Tohite),
+    Tohinm = as.numeric(Tohinm),
+    Tohivi = as.numeric(Tohivi)
+  ) %>%
+  filter(
+    Edadp >= 10 & Edadp <= 90,
+    Edadm >= 10 & Edadm <= 100,
+    Libras >= 1 & Libras <= 10,
+    Onzas >= 0 & Onzas <= 15,
+    Tohite >= 0 & Tohite <= 20,
+    Tohinm >= 0 & Tohinm <= 20,
+    Tohivi >= 0 & Tohivi <= 20
+  )
+
+# Crear nueva variable con el peso total en onzas
+datos_cambiados <- datos_limpios %>%
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+
+# Reetiquetar estados civiles para mejor interpretación
+etiquetas_estado_civil <- c(
+  "1" = "Soltera",
+  "2" = "Casada",
+  "3" = "Unida",
+  "4" = "Viuda",
+  "5" = "Divorciada",
+  "6" = "Separada",
+  "9" = "No especificado"
+)
+
+# Contar nacimientos por estado civil
 nacimientos_por_estado_civil <- datos_limpios %>%
+  mutate(Escivm = recode(as.character(Escivm), !!!etiquetas_estado_civil)) %>%
   group_by(Escivm) %>%
   summarise(Total_Nacimientos = n()) %>%
-  arrange(desc(Total_Nacimientos))  # Ordenar de mayor a menor
+  arrange(desc(Total_Nacimientos))
 
 # 📊 Gráfico de barras del número de nacimientos por estado civil
 ggplot(nacimientos_por_estado_civil, aes(x = reorder(Escivm, -Total_Nacimientos), y = Total_Nacimientos, fill = Escivm)) +
-  geom_bar(stat = "identity", alpha = 0.8, show.legend = FALSE) +
-  labs(title = "Número de Nacimientos por Estado Civil de la Madre",
-       x = "Estado Civil",
-       y = "Número de Nacimientos") +
+  geom_bar(stat = "identity", alpha = 0.9) +
+  labs(
+    title = "Número de Nacimientos por Estado Civil de la Madre",
+    x = "Estado Civil",
+    y = "Número de Nacimientos",
+    fill = "Estado Civil"
+  ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotar nombres para mejor lectura
-
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
 
-#### Analisis
+**Analisis**
 
-El estado civil 1 es soltera, el estado civil 2 es casa y el estado 3 es Unida  Podemos ver que una gran parte de las madres adolescentes son solteras, muy posiblemente debido a que aun no ha habido un casamiento o el padre esta ausente. Pero de manera alarmante podemos ver que una gran parte de los casamientos son de casadas. y si hacemos una exploracion mas profunda. 
+📊 **Análisis del gráfico: Número de Nacimientos por Estado Civil de la Madre**
+
+🔍 **Observaciones:**
+
+1. **Solteras predominan**:  
+
+   La mayor parte de los nacimientos registrados provienen de madres **solteras**, superando los 2.4 millones de casos. Esto indica una tendencia significativa de maternidad fuera del matrimonio legal o unión formal.
+
+2. **Casadas en segundo lugar**: 
+
+   Las madres **casadas** representan el segundo grupo más común, con más de 2 millones de nacimientos. Aunque es una cifra alta, es considerablemente menor que la de madres solteras.
+
+3. **Unidas y no especificado**:  
+
+   Las madres que reportaron estar **unidas** (convivencia sin matrimonio) o con estado civil **no especificado** constituyen una proporción muy baja del total. Esto puede deberse a falta de registro adecuado, omisión de datos o menor prevalencia real.
+
+🧠 **Conclusiones:**
+
+- **Patrón cultural y social**:
+
+  El alto número de nacimientos entre madres solteras puede reflejar un patrón cultural en el que el matrimonio no es un requisito previo para la maternidad, especialmente en ciertos sectores o grupos de edad.
+
+- **Implicaciones para políticas públicas**:  
+
+  Estos resultados sugieren que los programas de apoyo a la maternidad, educación sexual, planificación familiar y protección social deben estar especialmente dirigidos a madres solteras, ya que constituyen el grupo más amplio.
 
 ```{r}
 # Filtrar datos para encontrar la madre más joven con estado civil "2"
@@ -1537,7 +1674,6 @@ madre_menor_edad_estado_2 <- datos_limpios %>%
 cat("📌 La madre con menor edad y estado civil 2 tiene:", madre_menor_edad_estado_2$Edadp, "años.\n")
 
 ```
-
 Vemos que la madre con menor edad y que esta casada tan solo tiene 13 años. Esto es una cifra alarmante y nos sirve para dar una contextualizacion de porque suelen ocurrir estos embarazos, ya sea por un abuso, o por irresponsabilidad de los padres o otros temas que no hemos estado contando aqui mismo. 
 
 Hasta este momento hemos definido que una gran cantidad de madres son adolescentes y si bien se ha visto un decremento en estos embarazos, en los ultimos años ha habido un aumento y que en una gran parte de estos suelen suceder en departamentos historicamente aislados , y que una gran parte de las madres son casadas. 
@@ -1545,7 +1681,7 @@ Hasta este momento hemos definido que una gran cantidad de madres son adolescent
 Pero tambien queremos ver el acceso a hospitales tanto para  madres adolescentes como no. Ello nos explicaria el contexto economico de la misma y asi darnos una idea de los nacimientos en Guatemala. 
 
 
-#### Acceso a hospitales por madres adolescentes .
+**Acceso a hospitales por madres adolescentes**
 
 ```{r}
 
@@ -1575,22 +1711,15 @@ ggplot(datos_adolescente_vs_no, aes(x = Embarazo_Adolescente, fill = Asistencia_
 
 ```
 
-
-
-#### Analisis
+**Analisis**
 
 Podemos ver que la mayoria de veces tanto en mujers no adolescentes como no , la mayoria no recibe atencion medica durante el parto, pero se puede observar que la diferencia entre mujeres no adolescentes es mas evidente, muy posiblemente debido a que un embarazo de este estilo es mas peligroso que uno normal y por ende se suelen practicar este tipo de cosas para evitar problemas. 
 
-
 Esto es un indicativo de lo riesgoso que puede ser un parte tal asi , por ende nos podemos hacer la siguiente pregunta de analisis para completar nuestro analisis exploratorio. 
 
-
-#### Las madres jovenes que tanta diferencia tenian con los padres de los niños ?
-
-
+**¿Las madres jovenes que tanta diferencia tenian con los padres de los niños?**
 
 Para esto hacemos una analisis de edad 
-
 
 ```{r}
 library(ggplot2)
@@ -1607,18 +1736,11 @@ ggplot(datos_cambiados, aes(x = Diferencia_Edad)) +
 
 ```
 
-
-#### Analisis de los Datos
-
+**Analisis de los Datos**
 
 Podemos ver que la diferencia de edad entre los padres es bastante alto la mayoria de 5 a 10 años. Aunque se ve que una gran parte tambien son de mayor a 10 años. Esto puede ser una demostracion de un ambiente abusivo e incluso en muchos casos hasta ilegal, recordemos que la mayoria son mujeres entre 14 y 17 y una diferencia de 5 o 10 años ya te hace un adulto. 
 
-
-
-
 Como ultimo punto queremos ver cuales son los grupos etnicos mas afectados por recibir poca atencion, y especificamente en la poblacion de madres adolescentes. Cual de todos los grupos etnicos tiene mayor cantidad de madres adolescentes .  
-
-
 
 ```{r}
 # Filtrar solo madres menores de edad
@@ -1640,15 +1762,12 @@ ggplot(madres_adolescentes, aes(x = reorder(Gretnm, -n), y = n, fill = Gretnm)) 
 
 ```
 
-
-#### Analisis 
+**Analisis**
 
 Podemos ver que el grupo etnico con mas madres adolescentes es el maya siendo el 1, siguiendole el Garifuna  y el mestizo no presentandose en la grafica de forma aparente, lo que demuestra que uno de los grupos mas vulnerables para ser madres adolescentes es el maya 
 
-
-## Conclusiones
+**Conclusiones**
 Esto va muy en la linea si nos ponemos a pensar en lo que hemos analizado, pues vimos que el departamento de Alta Verapaz tiene una gran cantidad de madres adolescentes, y siendo el maya el grupo etnico mas comun puede ser debido a la zona en donde se encuentra mas . Tambien se observo que si bien la diferencia de edad no es tan grande en madres adolescentes si es muy significativa y en algunos casos hasta ilegal. 
-
 
 Obervamos que muchos de las madres adolescentes no reciben atencion medica al momento de dar a luz, pero es mucho mayor el porcentaje que las que no debiedo a las complicaciones de este embarazo, tambien se observo que existe cierta correelacion entre el peso de los bebes nacidos y de la edad de sus madres mostrando que muy posiblemente madres muy jovenes provoquen el nacimiento de bebes prematuros.
 
