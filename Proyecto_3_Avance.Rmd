@@ -265,19 +265,22 @@ El conjunto de datos corresponde a los registros de nacimientos recopilados por 
 
 A continuación se muestra una clasificación de los tipos de variables en los archivos:
 
-| **Tipo de Variable**             | **Ejemplos de variables**                                                                                             | **Descripción**                                                 |
-|----------------------------------|-----------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| **Categóricas nominales**        | `Sexo`, `Tipar`, `Asisrec`, `Sitioocu`, `ViaPar`, `PuebloPP`, `PuebloPM`                                              | Identifican categorías sin orden específico.                    |
-| **Categóricas ordinales**        | `Escolap`, `Escolam`, `Escivp`, `Escivm`                                                                              | Categorías con jerarquía, como nivel educativo o estado civil.  |
-| **Numéricas discretas**          | `Edadp`, `Edadm`, `Libras`, `Onzas`, `Tohite`, `Tohinm`, `Tohivi`                                                     | Valores numéricos contables o discretos (no continuos).         |
-| **Ubicación geográfica**         | `Depreg`, `Mupreg`, `Depocu`, `Mupocu`, `Deprep`, `Muprep`, `Deprem`, `Muprem`, `Depnap`, `Mupnap`, `Depnam`, `Mupnam`| Lugar de residencia, nacimiento o ocurrencia del evento.        |
-| **Información del padre**        | `Ocupap`, `Escolap`, `Depnap`, `Naciop`, `Paisnacp`, `Paisrep`                                                        | Datos del padre: ocupación, escolaridad, nacionalidad, etc.     |
-| **Información de la madre**      | `Ocupam`, `Escolam`, `Edadp`, `Naciom`, `Paisnacm`, `Paisrem`                                                         | Datos de la madre: similares al padre, además de edad.          |
-| **Identificadores temporales**   | `Mesreg`, `Añoreg`, `Mesocu`, `Añoocu`, `Diaocu`                                                                      | Datos de cuándo ocurrió y se registró el nacimiento.            |
-| **Asistencia médica y parto**    | `Sitioocu`, `TipoIns`, `Tipar`, `Asisrec`                                                                             | Características del parto y asistencia médica recibida.         |
-| **Tamaño familiar**              | `Tohite`, `Tohinm`, `Tohivi`                                                                                          | Cantidad de hijos tenidos, vivos o informados.                  |
-| **Otros códigos del nacimiento** | `grupetma`, `Gretnp`, `Gretnm`, `Ciuopad`, `Ciuomad`, `Munpnam`                                                       | Códigos específicos de clasificación SPSS o registros puntuales.|
-| **Identificación del archivo**   | `archivo`, `anio`                                                                                                     | Metadatos del archivo origen y año del registro.                |
+**Tabla de tipos de variables**
+
+| Tipo de Variable                | Ejemplos de variables                                                                          | Descripción                                                                       |
+|---------------------------------|------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------|
+| **Categóricas nominales**       | Sexo, Tipar, Asisrec, Sitioocu, ViaPar, PuebloPP, PuebloPM, **Escivp, Escivm**                 | Categorías sin orden inherente. Incluye estado civil, etnias, tipo de parto, etc. |
+| **Categóricas ordinales**       | Escolap, Escolam                                                                               | Tienen un orden natural (niveles educativos, por ejemplo).                        |
+| **Numéricas discretas**         | Edadp, Edadm, Tohite, Tohinm, Tohivi                                                           | Valores numéricos contables, no continuos.                                        |
+| **Numéricas continuas**         | Peso_total_lb (Libras + Onzas/16)                                                              | Valores medibles que pueden tomar decimales, como el peso total al nacer.         |
+| **Ubicación geográfica**        | Depreg, Mupreg, Depocu, Mupocu, Deprep, Muprep, Deprem, Muprem, Depnap, Mupnap, Depnam, Mupnam | Códigos de residencia, nacimiento u ocurrencia del evento.                        |
+| **Identificadores temporales**  | Mesreg, Añoreg, Mesocu, Añoocu, Diaocu                                                         | Fecha de ocurrencia o registro del nacimiento.                                    |
+| **Asistencia médica y parto**   | Tipar, Asisrec, TipoIns, Sitioocu                                                              | Describe tipo de parto, asistencia médica, institución, etc.                      |
+| **Tamaño familiar**             | Tohite, Tohinm, Tohivi                                                                         | Información sobre hijos tenidos, vivos o muertos.                                 |
+| **Información del padre**       | Ocupap, Escolap, Edadp, Escivp, Naciop, Paisnacp, Paisrep                                      | Información sociodemográfica del padre.                                           |
+| **Información de la madre**     | Ocupam, Escolam, Edadm, Escivm, Naciom, Paisnacm, Paisrem                                      | Información sociodemográfica de la madre.                                         |
+| **Otros códigos del nacimiento**| grupetma, Gretnp, Gretnm, Ciuopad, Ciuomad, Munpnam                                            | Códigos específicos o presentes solo en algunos años.                             |
+| **Identificación del archivo**  | archivo, anio                                                                                  | Metadatos de control: nombre de archivo y año.                                    |
 
 **Notas importantes:**
 
@@ -287,62 +290,452 @@ A continuación se muestra una clasificación de los tipos de variables en los a
 
 **A continuación se tienen la descripción y clasificación de todas las variables:**
 
-| **Variable**   | **Descripción**                                                                  |
-|----------------|----------------------------------------------------------------------------------|
-| Depreg         | Código del departamento donde se registró el nacimiento                          |
-| Mupreg         | Código del municipio donde se registró el nacimiento                             |
-| Mesreg         | Mes de registro del nacimiento                                                   |
-| Añoreg         | Año de registro del nacimiento                                                   |
-| Depocu         | Código del departamento donde ocurrió el nacimiento                              |
-| Mupocu         | Código del municipio donde ocurrió el nacimiento                                 |
-| Libras         | Peso del bebé al nacer en libras                                                 |
-| Onzas          | Peso del bebé al nacer en onzas                                                  |
-| Diaocu         | Día en que ocurrió el nacimiento                                                 |
-| Mesocu         | Mes en que ocurrió el nacimiento                                                 |
-| Añoocu         | Año en que ocurrió el nacimiento                                                 |
-| Sexo           | Sexo del bebé (1 = Hombre, 2 = Mujer)                                            |
-| Tipar          | Tipo de parto (1 = Vaginal, 2 = Cesárea, etc.)                                   |
-| Edadp          | Edad del padre en años                                                           |
-| Deprep         | Departamento de residencia del padre                                             |
-| Muprep         | Municipio de residencia del padre                                                |
-| Escivp         | Estado civil del padre                                                           |
-| Depnap         | Departamento de nacimiento del padre                                             |
-| Mupnap         | Municipio de nacimiento del padre                                                |
-| Naciop         | Nacionalidad del padre (código)                                                  |
-| Ocupap         | Ocupación del padre (según clasificación nacional)                               |
-| Edadm          | Edad de la madre en años                                                         |
-| Deprem         | Departamento de residencia de la madre                                           |
-| Muprem         | Municipio de residencia de la madre                                              |
-| Escivm         | Estado civil de la madre                                                         |
-| Depnam         | Departamento de nacimiento de la madre                                           |
-| Mupnam         | Municipio de nacimiento de la madre                                              |
-| Naciom         | Nacionalidad de la madre (código)                                                |
-| Ocupam         | Ocupación de la madre                                                            |
-| Escolap        | Nivel educativo alcanzado por el padre                                           |
-| Escolam        | Nivel educativo alcanzado por la madre                                           |
-| Paisrep        | País de residencia del padre                                                     |
-| Paisrem        | País de residencia de la madre                                                   |
-| Paisnacp       | País de nacimiento del padre                                                     |
-| Paisnacm       | País de nacimiento de la madre                                                   |
-| Asisrec        | Si hubo asistencia médica en el nacimiento                                       |
-| Sitioocu       | Lugar donde ocurrió el nacimiento (hospital, casa, etc.)                         |
-| TipoIns        | Tipo de institución que atendió el parto (si aplica)                             |
-| ViaPar / Viapar| Vía del parto (puede ser duplicado en nombre)                                    |
-| PuebloPP       | Pertenencia étnica del padre (pueblo indígena, mestizo, etc.)                    |
-| PuebloPM       | Pertenencia étnica de la madre                                                   |
-| Tohite         | Total de hijos tenidos                                                           |
-| Tohinm         | Total de hijos nacidos muertos                                                   |
-| Tohivi         | Total de hijos vivos                                                             |
-| grupetma       | Clasificación del grupo étnico de la madre (código)                              |
-| Gretnp         | Grupo étnico del padre                                                           |
-| Gretnm         | Grupo étnico de la madre                                                         |
-| Ciuopad        | Ciudad de nacimiento del padre (algunos años)                                    |
-| Ciuomad        | Ciudad de nacimiento de la madre (algunos años)                                  |
-| Munpnam        | Municipio de nacimiento de la madre (alternativa a munnam)                       |
-| archivo        | Nombre del archivo del cual se extrajo el dato                                   |
-| anio           | Año correspondiente al archivo (2009–2022)                                       |
+**Descripción y tipo de variable**
+
+| **Variable**   | **Descripción**                                                                  | **Tipo de variable**            |
+|----------------|----------------------------------------------------------------------------------|---------------------------------|
+| Depreg         | Código del departamento donde se registró el nacimiento                          | Categórica nominal              |
+| Mupreg         | Código del municipio donde se registró el nacimiento                             | Categórica nominal              |
+| Mesreg         | Mes de registro del nacimiento                                                   | Identificador temporal          |
+| Añoreg         | Año de registro del nacimiento                                                   | Identificador temporal          |
+| Depocu         | Código del departamento donde ocurrió el nacimiento                              | Categórica nominal              |
+| Mupocu         | Código del municipio donde ocurrió el nacimiento                                 | Categórica nominal              |
+| Libras         | Peso del bebé al nacer en libras                                                 | Numérica discreta (ver nota)    |
+| Onzas          | Peso del bebé al nacer en onzas                                                  | Numérica discreta (ver nota)    |
+| Diaocu         | Día en que ocurrió el nacimiento                                                 | Identificador temporal          |
+| Mesocu         | Mes en que ocurrió el nacimiento                                                 | Identificador temporal          |
+| Añoocu         | Año en que ocurrió el nacimiento                                                 | Identificador temporal          |
+| Sexo           | Sexo del bebé (1 = Hombre, 2 = Mujer)                                            | Categórica nominal              |
+| Tipar          | Tipo de parto (1 = Vaginal, 2 = Cesárea, etc.)                                   | Categórica nominal              |
+| Edadp          | Edad del padre en años                                                           | Numérica discreta               |
+| Deprep         | Departamento de residencia del padre                                             | Categórica nominal              |
+| Muprep         | Municipio de residencia del padre                                                | Categórica nominal              |
+| Escivp         | Estado civil del padre                                                           | Categórica nominal              |
+| Depnap         | Departamento de nacimiento del padre                                             | Categórica nominal              |
+| Mupnap         | Municipio de nacimiento del padre                                                | Categórica nominal              |
+| Naciop         | Nacionalidad del padre (código)                                                  | Categórica nominal              |
+| Ocupap         | Ocupación del padre (según clasificación nacional)                               | Categórica nominal              |
+| Edadm          | Edad de la madre en años                                                         | Numérica discreta               |
+| Deprem         | Departamento de residencia de la madre                                           | Categórica nominal              |
+| Muprem         | Municipio de residencia de la madre                                              | Categórica nominal              |
+| Escivm         | Estado civil de la madre                                                         | Categórica nominal              |
+| Depnam         | Departamento de nacimiento de la madre                                           | Categórica nominal              |
+| Mupnam         | Municipio de nacimiento de la madre                                              | Categórica nominal              |
+| Naciom         | Nacionalidad de la madre (código)                                                | Categórica nominal              |
+| Ocupam         | Ocupación de la madre                                                            | Categórica nominal              |
+| Escolap        | Nivel educativo alcanzado por el padre                                           | Categórica ordinal              |
+| Escolam        | Nivel educativo alcanzado por la madre                                           | Categórica ordinal              |
+| Paisrep        | País de residencia del padre                                                     | Categórica nominal              |
+| Paisrem        | País de residencia de la madre                                                   | Categórica nominal              |
+| Paisnacp       | País de nacimiento del padre                                                     | Categórica nominal              |
+| Paisnacm       | País de nacimiento de la madre                                                   | Categórica nominal              |
+| Asisrec        | Si hubo asistencia médica en el nacimiento                                       | Categórica nominal              |
+| Sitioocu       | Lugar donde ocurrió el nacimiento (hospital, casa, etc.)                         | Categórica nominal              |
+| TipoIns        | Tipo de institución que atendió el parto (si aplica)                             | Categórica nominal              |
+| ViaPar / Viapar| Vía del parto (puede ser duplicado en nombre)                                    | Categórica nominal              |
+| PuebloPP       | Pertenencia étnica del padre (pueblo indígena, mestizo, etc.)                    | Categórica nominal              |
+| PuebloPM       | Pertenencia étnica de la madre                                                   | Categórica nominal              |
+| Tohite         | Total de hijos tenidos                                                           | Numérica discreta               |
+| Tohinm         | Total de hijos nacidos muertos                                                   | Numérica discreta               |
+| Tohivi         | Total de hijos vivos                                                             | Numérica discreta               |
+| grupetma       | Clasificación del grupo étnico de la madre (código)                              | Categórica nominal              |
+| Gretnp         | Grupo étnico del padre                                                           | Categórica nominal              |
+| Gretnm         | Grupo étnico de la madre                                                         | Categórica nominal              |
+| Ciuopad        | Ciudad de nacimiento del padre (algunos años)                                    | Categórica nominal              |
+| Ciuomad        | Ciudad de nacimiento de la madre (algunos años)                                  | Categórica nominal              |
+| Munpnam        | Municipio de nacimiento de la madre (alternativa a munnam)                       | Categórica nominal              |
+| archivo        | Nombre del archivo del cual se extrajo el dato                                   | Identificador de archivo        |
+| anio           | Año correspondiente al archivo (2009–2022)                                       | Identificador de archivo        |
+
+🔎 Nota importante: Se recomienda crear una nueva variable peso_total_lb = Libras + Onzas / 16 y analizarla como numérica continua en lugar de separar libras y onzas en el análisis.
 
 ### b.	Realicen un resumen de las variables numéricas e investiguen si siguen una distribución normal y, para las variables categóricas obtengan una tabla de frecuencia, documenten lo que vayan encontrando.
+
+```{r}
+# 📦 Librerías necesarias
+library(dplyr)
+library(ggplot2)
+
+# 🔧 Limpiar y filtrar datos numéricos
+datos_limpios <- datos_completos %>%
+  mutate(
+    Edadp  = as.numeric(Edadp),
+    Edadm  = as.numeric(Edadm),
+    Libras = as.numeric(Libras),
+    Onzas  = as.numeric(Onzas),
+    Tohite = as.numeric(Tohite),
+    Tohinm = as.numeric(Tohinm),
+    Tohivi = as.numeric(Tohivi),
+    peso_total_lb = Libras + Onzas / 16
+  ) %>%
+  filter(
+    Edadp >= 10 & Edadp <= 90,
+    Edadm >= 10 & Edadm <= 100,
+    Libras >= 1 & Libras <= 10,
+    Onzas >= 0 & Onzas <= 15,
+    Tohite >= 0 & Tohite <= 20,
+    Tohinm >= 0 & Tohinm <= 20,
+    Tohivi >= 0 & Tohivi <= 20
+  )
+
+# 🔢 Variables numéricas
+vars_numericas <- c("Edadp", "Edadm", "Tohite", "Tohinm", "Tohivi", "peso_total_lb")
+
+# 📊 Resumen estadístico de numéricas
+resumen_numerico <- datos_limpios %>%
+  select(all_of(vars_numericas)) %>%
+  summarise(across(everything(), list(
+    media = ~mean(., na.rm = TRUE),
+    mediana = ~median(., na.rm = TRUE),
+    sd = ~sd(., na.rm = TRUE),
+    min = ~min(., na.rm = TRUE),
+    max = ~max(., na.rm = TRUE)
+  ), .names = "{.col}_{.fn}"))
+
+print(resumen_numerico)
+
+# 📈 Histogramas
+for (var in vars_numericas) {
+  if (var %in% names(datos_limpios)) {
+    print(
+      ggplot(datos_limpios, aes(x = .data[[var]])) +
+        geom_histogram(bins = 30, fill = "skyblue", color = "black") +
+        labs(title = paste("Distribución de", var), x = var, y = "Frecuencia")
+    )
+  }
+}
+
+# 🧪 Pruebas de normalidad (muestra de 5000)
+set.seed(123)
+muestra <- datos_limpios %>% sample_n(5000)
+
+cat("\nPrueba de normalidad - Edad de la madre:\n")
+print(shapiro.test(muestra$Edadm))
+
+cat("\nPrueba de normalidad - Peso total del bebé:\n")
+print(shapiro.test(muestra$peso_total_lb))
+
+# 🧾 Variables categóricas individuales
+vars_categoricas <- c("Sexo", "Tipar", "Asisrec", "Sitioocu", "Escivp", "Escivm", "Escolap", "Escolam")
+
+for (var in vars_categoricas) {
+  if (var %in% names(datos_limpios)) {
+    cat("\n📋 Frecuencia de:", var, "\n")
+    print(table(datos_limpios[[var]], useNA = "ifany"))
+
+    print(
+      ggplot(datos_limpios, aes(x = factor(.data[[var]]))) +
+        geom_bar(fill = "lightcoral") +
+        labs(title = paste("Frecuencia de", var), x = var, y = "Frecuencia")
+    )
+  }
+}
+
+# 👨‍👩‍👧‍👦 Variables específicas de los padres
+cat("\nResumen variables de padres y madres:\n")
+print(summary(select(datos_limpios,
+                     Edadp, Edadm,
+                     Escolap, Escolam,
+                     Escivp, Escivm,
+                     Ocupap, Ocupam)))
+```
+
+### 📊 **Análisis e interpretación del resumen estadístico de numéricas**
+
+**Edad del padre (`Edadp`)**
+
+- **Media:** 29.48 años  
+- **Mediana:** 28 años  
+- **Desviación estándar:** 8.03  
+- **Mínimo:** 12 años  
+- **Máximo:** 90 años  
+
+**Interpretación:** La edad promedio de los padres al momento del nacimiento es de aproximadamente **29 años**, siendo **28 años** el valor más frecuente. Hay casos extremos de padres muy jóvenes (12 años) y muy mayores (90 años), aunque estos últimos seguramente sean excepcionales.
+
+---
+
+**Edad de la madre (`Edadm`)**
+
+- **Media:** 25.85 años  
+- **Mediana:** 25 años  
+- **Desviación estándar:** 6.56  
+- **Mínimo:** 10 años  
+- **Máximo:** 59 años  
+
+**Interpretación:** Las madres tienden a ser más jóvenes que los padres, con una edad promedio de **25 años**. Se observan casos de maternidad muy joven (10 años), lo que puede indicar problemáticas sociales importantes (como embarazo adolescente o infantil).
+
+
+**Total de hijos tenidos (`Tohite`)**
+
+- **Media:** 2.72 hijos  
+- **Mediana:** 2 hijos  
+- **Desviación estándar:** 2.05  
+- **Máximo:** 19 hijos  
+
+**Interpretación:** La mayoría de las madres ha tenido entre **2 y 3 hijos**, pero existen casos extremos de hasta **19 hijos**, lo que es inusual y podría estar relacionado con generaciones mayores o ciertas regiones específicas.
+
+
+**Total de hijos nacidos muertos (`Tohinm`)**
+
+- **Media:** 0.18 hijos  
+- **Mediana:** 0 hijos  
+- **Desviación estándar:** 0.65  
+- **Máximo:** 20 hijos  
+
+**Interpretación:** La gran mayoría **no ha tenido hijos nacidos muertos** (mediana = 0). Sin embargo, hay casos extremos de hasta **20 hijos fallecidos**, lo cual podría ser indicativo de errores de digitación o condiciones médicas/ambientales críticas.
+
+
+**Total de hijos vivos (`Tohivi`)**
+
+- **Media:** 2.55 hijos  
+- **Mediana:** 2 hijos  
+- **Desviación estándar:** 1.93  
+- **Máximo:** 17 hijos  
+
+**Interpretación:** Coincide con el total de hijos tenidos, lo que confirma baja mortalidad en general. Casos de hasta **17 hijos vivos** también reflejan valores extremos.
+
+
+**Peso total al nacer (`peso_total_lb`)**
+
+- **Media:** 6.75 lb  
+- **Mediana:** 6.875 lb  
+- **Desviación estándar:** 1.08  
+- **Mínimo:** 1 lb  
+- **Máximo:** 10.94 lb  
+
+**Interpretación:** El peso promedio al nacer se encuentra dentro del rango normal (**entre 5.5 y 8.8 lb**), con la mayoría entre **6.5 y 7 lb**. Existen valores extremos, tanto de bebés con **peso muy bajo** (< 2 lb) como con **peso elevado** (> 10 lb), posiblemente indicando partos prematuros o macrosomía fetal.
+
+
+**Conclusiones generales**
+
+- **Diferencia de edad entre padres y madres:** En promedio, los padres tienen entre **3 y 4 años más** que las madres, lo cual es consistente con patrones culturales comunes.
+- **Presencia de embarazos adolescentes o infantiles:** Se encontraron edades maternas tan bajas como **10 años**, lo que podría evidenciar vulnerabilidad social.
+- **La mayoría de las madres tiene entre 2 y 3 hijos**, y **pocos presentan hijos muertos**. Sin embargo, se detectaron valores extremos que deben analizarse con mayor cuidado.
+- **El peso promedio al nacer es adecuado**, aunque hay casos preocupantes de **bajo peso**, los cuales podrían correlacionarse con edad de la madre, atención médica o número de hijos previos.
+
+Gracias por compartir las gráficas. A continuación te presento el **análisis e interpretación visual** de cada variable y luego unas **conclusiones generales** que puedes copiar directamente en tu informe.
+
+
+**Análisis de las distribuciones:**
+
+1. **Edad del padre (`Edadp`)**
+
+- La distribución tiene una forma **asimétrica hacia la derecha** (cola larga).
+- La mayoría de los padres tienen entre **25 y 35 años**.
+- Hay pocos casos de padres mayores de 50 años, y algunos valores extremos.
+
+**Interpretación:** Aunque hay padres de todas las edades, se observa una concentración entre los **30 años**. Esto indica que es común que los padres estén en una edad adulta joven al momento del nacimiento.
+
+
+2. **Edad de la madre (`Edadm`)**
+
+- Distribución ligeramente **asimétrica a la derecha**.
+- La mayoría de las madres tienen entre **20 y 30 años**.
+- También se observan casos de madres adolescentes y algunas pocas de más de 40 años.
+
+**Interpretación:** Las madres tienden a ser más jóvenes que los padres. Hay evidencia de **embarazos en adolescentes** y adultos jóvenes, algo importante desde el punto de vista social y de salud pública.
+
+
+3. **Total de hijos tenidos (`Tohite`)**
+
+- Distribución **altamente sesgada a la derecha**.
+- La mayoría tiene entre **1 y 3 hijos**.
+- Hay valores extremos que superan los **10 hijos**.
+
+**Interpretación:** Lo común es que las madres tengan pocos hijos, pero también existen casos de familias numerosas, posiblemente vinculadas a zonas rurales o generaciones mayores.
+
+
+
+4. **Total de hijos nacidos muertos (`Tohinm`)**
+
+- Distribución **extremadamente sesgada a la derecha**.
+- La gran mayoría tiene **0 hijos nacidos muertos**.
+- Casos con más de 3 son muy raros.
+
+**Interpretación:** La mortalidad neonatal reportada es baja en general, lo cual es positivo. Sin embargo, los casos con múltiples pérdidas deben analizarse por posibles factores de riesgo.
+
+
+
+5. **Total de hijos vivos (`Tohivi`)**
+
+- También muestra una **asimetría a la derecha**.
+- Lo más frecuente son **2 o 3 hijos vivos**.
+- Algunos casos reportan más de **10 hijos vivos**.
+
+**Interpretación:** Los datos concuerdan con el total de hijos tenidos. La mayoría tiene entre **1 y 4 hijos vivos**, con pocos casos extremos.
+
+
+6. **Peso total al nacer (`peso_total_lb`)**
+
+- Distribución con **forma de campana** y un leve doble pico.
+- Centro entre **6.5 y 7 lb**, lo cual es saludable.
+- Hay valores por debajo de 4 lb y por encima de 9 lb.
+
+**Interpretación:** El peso promedio es adecuado. Sin embargo, la presencia de pesos bajos puede indicar partos prematuros o riesgo de salud neonatal.
+
+
+**Conclusiones generales**
+
+- Las **edades de madres y padres** se concentran entre los 20 y 35 años, aunque hay casos de embarazos adolescentes y paternidades tardías.
+- El número de hijos muestra que la mayoría de familias son pequeñas, aunque existen casos extremos de hasta 10 hijos o más.
+- **La mayoría de los bebés nacen con peso saludable**, aunque existen algunos con bajo peso que deben vigilarse.
+- La mortalidad neonatal es baja según los datos, pero los valores atípicos deben validarse por posibles errores de digitación o condiciones graves.
+
+Gracias por compartir los resultados. Aquí tienes un análisis interpretativo completo, separado en tres partes: **pruebas de normalidad**, **frecuencias de variables categóricas**, y **resumen de variables de padres y madres**, seguido por **conclusiones generales** que puedes copiar directamente a tu informe.
+
+---
+
+### 📈 Pruebas de normalidad (Shapiro-Wilk)
+
+#### 🔹 Edad de la madre (`Edadm`)
+- **W = 0.96115**, **p-value < 2.2e-16**
+- Esto indica que **la edad de la madre no sigue una distribución normal** (p < 0.05).
+- Visualmente se observó una ligera asimetría a la derecha, lo cual coincide con este resultado.
+
+#### 🔹 Peso total del bebé (`peso_total_lb`)
+- **W = 0.97859**, **p-value < 2.2e-16**
+- A pesar de que la distribución tenía forma de campana, **el test también rechaza la normalidad** estadísticamente.
+- Esto se debe a pequeñas asimetrías o a la presencia de muchos datos, que hacen que el test sea muy sensible.
+
+🔍 *Interpretación:* Ambas variables no siguen una distribución normal. Esto sugiere que cualquier análisis posterior (como pruebas estadísticas) debería usar técnicas **no paramétricas** o transformaciones si se requiere normalidad.
+
+**Análisis de variables categóricas (frecuencias)**
+
+🔸 `Sexo` del bebé
+
+- Hombres (`1`): 2,254,955  
+- Mujeres (`2`): 2,184,428  
+
+✅ **Distribución bastante equilibrada**, con ligera mayoría de nacimientos masculinos (~51%).
+
+🔸 `Tipar` (Tipo de parto)
+
+- Vaginal (`1`): 4,385,803  
+- Cesárea (`2`): 52,701  
+- Otros: (`3`, `4`) muy pocos casos  
+
+✅ **Parto vaginal es el más común** (~98%). Cesáreas son el 1.17%, lo cual podría estar subreportado o reflejar atención limitada.
+
+🔸 `Asisrec` (Asistencia médica)
+
+- `1`: 2,818,265 — probablemente asistencia médica completa  
+- `4`: 812,238 — probablemente parteras o asistencia parcial  
+- Otros códigos presentes  
+
+**Interpretación:** Aunque la mayoría recibió atención médica, hay una porción considerable con asistencia alternativa o incompleta.
+
+🔸 `Sitioocu` (Lugar del parto)
+
+- `1`: 1,689,182 — probablemente hospital  
+- `6`: 1,240,916 — posiblemente casa u otro sitio  
+
+**Interpretación:** Hay un número importante de partos fuera de hospitales. Esto debe revisarse por zona geográfica o tipo de institución.
+
+🔸 `Escivp` y `Escivm` (Estado civil del padre y madre)
+
+- La mayoría son `1` y `2`, que probablemente representan “casado” y “soltero”  
+- También se reportan `9` (no especificado) y otros pocos valores
+
+**Interpretación:** El estado civil está disponible y bien distribuido, aunque hay valores perdidos o no reportados que podrían influir en los cruces.
+
+🔸 `Escolap` y `Escolam` (Escolaridad padre y madre)
+
+- Nivel `2` y `1` (básico y primaria) son los más comunes  
+- Muchas observaciones con valor `NA` y códigos `9` (no especificado)
+
+**Interpretación:** Hay un patrón similar en escolaridad para ambos, pero **faltan muchos datos**, especialmente en el caso de los padres.
+
+
+👨‍👩‍👧‍👦 Análisis de variables de padres y madres
+
+🔹 Edad
+- **Edad padre** promedio: 29.5 años  
+- **Edad madre** promedio: 25.8 años  
+
+✅ Confirmado que los padres tienden a ser en promedio **3–4 años mayores** que las madres.
+
+🔹 Escolaridad
+- Distribuida entre niveles básicos y primaria.
+- Faltantes importantes (`NA`) sobre todo en los padres.
+
+🔹 Estado civil
+- Coherencia entre padres y madres.
+- Valores como `9` (NS/NR) presentes pero minoritarios.
+
+**conclusiones generales**
+
+- Las variables **edad y peso** no siguen una distribución normal, por lo que cualquier inferencia debe considerar métodos no paramétricos o categorizaciones.
+- La mayoría de nacimientos ocurren con **asistencia médica**, aunque todavía hay muchos partos fuera de hospitales, lo cual puede estar relacionado con **zona rural o acceso limitado**.
+- El **parto vaginal predomina abrumadoramente**, aunque es posible que las cesáreas estén subregistradas.
+- El **estado civil y escolaridad** muestran patrones similares entre padre y madre, aunque **faltan datos del padre** en una proporción relevante.
+- La información recopilada permite cruzar varias variables (como escolaridad vs estado civil, o tipo de parto vs edad de la madre) en el siguiente paso del análisis.
+
+**Análisis de variables categóricas**
+
+🔸 Sexo del bebé (`Sexo`)
+
+- Dos barras prácticamente iguales: `1` (Hombre) y `2` (Mujer).
+- Ligera mayoría de nacimientos masculinos.
+
+**Conclusión:** La distribución por sexo es **equilibrada**, lo que indica ausencia de sesgo relevante entre nacimientos de niños y niñas.
+
+🔸 Tipo de parto (`Tipar`)
+
+- El valor `1` (probablemente parto vaginal) **domina abrumadoramente**.
+- Cesárea (`2`) y otros (`3`, `4`) son marginales.
+
+**Conclusión:** El **parto vaginal es la práctica más común** en Guatemala. Es posible que haya **subregistro de cesáreas** o una baja intervención médica en ciertas regiones.
+
+🔸 Asistencia médica (`Asisrec`)
+
+- Valor `1` lidera con mucha diferencia (probablemente atención médica profesional).
+- También hay una porción significativa en `4` (probablemente atención por partera).
+- Otros valores están presentes pero son mucho menores.
+
+**Conclusión:** Aunque la mayoría recibe **asistencia profesional**, existe una cantidad importante de nacimientos con **asistencia alternativa** (como parteras), lo que sugiere **desigualdad en el acceso a servicios de salud**.
+
+🔸 Sitio del parto (`Sitioocu`)
+
+- Mayoría de partos ocurren en lugares identificados como `1` y `6`.
+- También hay nacimientos en otros sitios, aunque menos frecuentes.
+
+**Conclusión:** Muchos partos ocurren **en hospitales u otros centros médicos**, pero también se reportan con frecuencia **nacimientos fuera de centros de salud**, lo cual podría indicar **zonas rurales o baja cobertura hospitalaria**.
+
+🔸 Estado civil del padre (`Escivp`)
+
+- Predominan las categorías `1` y `2`, que posiblemente representan “casado” y “soltero”.
+- Otros valores como `3` y `9` son marginales.
+
+🔸 Estado civil de la madre (`Escivm`)
+- Misma tendencia que el padre, con distribución parecida.
+
+**Conclusión:** La mayoría de los padres y madres son **casados o solteros**. La coherencia sugiere buena calidad del dato, aunque los casos “no especificado” (código `9`) podrían representar datos omitidos.
+
+🔸 Escolaridad del padre (`Escolap`)
+
+- Pico en nivel `2` (posiblemente primaria completa o básica).
+- Distribución cae hacia niveles más altos.
+- Alta cantidad de `NA` y valores “sin especificar” (`9`).
+
+**Conclusión:** La mayoría de los padres **tienen escolaridad básica**, con **pocos alcanzando educación superior**. Los datos faltantes limitan el análisis.
+
+🔸 Escolaridad de la madre (`Escolam`)
+
+- Distribución similar al padre, pero con **menos valores perdidos**.
+- Predominan los niveles bajos (`1`, `2`).
+
+**Conclusión:** Las madres presentan **niveles educativos similares** a los padres, pero **con más datos disponibles**, lo que facilita mejores análisis comparativos.
+
+
+**Conclusiones generales**
+
+- Las variables categóricas clave como `Sexo`, `Tipar`, `Asisrec` y `Sitioocu` presentan distribuciones **claras y consistentes** con la situación sanitaria del país.
+- Se evidencia que:
+  - La mayoría de nacimientos ocurre **en hospitales** y con **asistencia médica**.
+  - **El parto vaginal es el predominante**.
+  - Existe un porcentaje importante de **partos fuera de instituciones médicas** o con **asistencia por parteras**, lo cual podría estar asociado a limitaciones geográficas o culturales.
+- El **estado civil y escolaridad de padres y madres** son coherentes entre sí, pero hay **falta de datos en los hombres**, especialmente en escolaridad.
+- El patrón general refleja una **población joven**, con educación básica como nivel más común y acceso desigual a servicios de salud.
 
 ```{r}
 # 🔧 Filtrar valores atípicos y mantener datos consistentes
@@ -408,30 +801,49 @@ for (var in vars_categoricas) {
 
 ```
 
-### Analisis de los Hallazgos
+**Analisis de los Hallazgos**
 
-Podemos ver que las edades medias y minimas son de 28 y 12 años, al igual que las libras medias son de 6.3 a 6 , lo cual es un indide de una poblacion relativamente joven . 
+Al observar las distribuciones de edad, se encontró que:
 
-Tambien vemos que conforme a los año esta media de libras se ido desplazando mas hacia la derecha, Y que la cantidad de personas a aumentado mas a la edades grandes , lo que puede indicar que los nacimientos hemos visto que la poblacion ha aumentado esto puede mostrar a que la poblacion se ha hecho mucho mas anciana pero tambien aumento el peso de los mismos . Ello es posible que sea fruto de un sesgo dado a que ahora hay muchos mas adultos que antes. 
+- La **edad mínima de la madre** es de **10 años** y la del **padre** es de **12 años**.
+- Las **edades medias** son de aproximadamente **25.8 años para las madres** y **29.5 años para los padres**.
 
+*Esto indica que los nacimientos en Guatemala ocurren en su mayoría dentro de una población joven, aunque también se identificaron casos de maternidad y paternidad adolescentes, lo cual representa un posible riesgo social y de salud.*
 
-Tambien vemos que las onzas de los nacimientos se han visto distribuidos de una forma que no es normal, sino que puede deberse a datos atipicos que se ven sesgos en ambos extremos. 
+Respecto al peso del bebé:
 
+- Se calculó el **peso total al nacer** como la suma de libras y onzas (`peso_total_lb`).
+- El **peso promedio** fue de **6.75 libras**, con valores mínimos cercanos a 1 libra y máximos por encima de 10 libras.
+- La distribución tiene una forma **ligeramente sesgada**, con un rango saludable predominante, aunque también se observaron casos de **bajo peso**, lo cual debe ser monitoreado por posibles riesgos de salud.
 
+*No se puede afirmar con certeza que el peso haya aumentado con el tiempo, ya que no se realizó un análisis temporal (por año). Para validar esa hipótesis sería necesario cruzar el peso con el año del nacimiento.*
 
+También se detectó que las **variables numéricas no siguen una distribución normal**, según las pruebas de Shapiro-Wilk. Esto sugiere la existencia de **valores atípicos o distribuciones sesgadas**, especialmente en variables como:
+
+- **Número total de hijos tenidos (`Tohite`)**
+- **Número de hijos muertos (`Tohinm`)**
+- **Número de hijos vivos (`Tohivi`)**
+
+*Estas variables muestran que la mayoría de las madres ha tenido entre 1 y 3 hijos, aunque también existen casos extremos que superan los 10 hijos, posiblemente asociados a contextos rurales o generaciones anteriores.*
 
 ### c.	Crucen las variables que consideren sean las más importantes para hallar los elementos clave que permitan comprender lo que está causando el problema encontrado.
 
 ```{r}
-# Librerías necesarias
+# 📦 Librerías necesarias
 library(dplyr)
 library(ggplot2)
 library(scales)
+library(RColorBrewer)
 
-# Filtrar datos válidos
+# 🔧 Transformación y validación de datos
 datos_validados <- datos_completos %>%
   mutate(
     Edadm = as.numeric(Edadm),
+    grupo_edad = case_when(
+      Edadm < 20 ~ "Adolescente",
+      Edadm >= 20 & Edadm < 50 ~ "Adulta",
+      TRUE ~ NA_character_
+    ),
     Tipar = factor(Tipar, levels = c("1", "2", "3", "4"),
                    labels = c("Vaginal", "Cesárea", "No especificado", "No aplica")),
     Escolam = factor(Escolam, levels = c("1", "2", "3", "4", "5", "6"),
@@ -441,236 +853,294 @@ datos_validados <- datos_completos %>%
     Sitioocu = factor(Sitioocu, levels = c("1", "2", "3", "4", "5"),
                       labels = c("Hospital público", "Hospital privado", "Centro de salud", "Domicilio", "Otro")),
     Asisrec = factor(Asisrec, levels = c("1", "2", "3", "4"),
-                     labels = c("Médico", "Enfermera", "Partera", "Otro")),
-    grupo_edad = case_when(
-      Edadm < 20 ~ "Adolescente",
-      Edadm >= 20 & Edadm < 50 ~ "Adulta",
-      TRUE ~ NA_character_
-    )
+                     labels = c("Médico", "Enfermera", "Partera", "Otro"))
   ) %>%
   filter(!is.na(grupo_edad))
 
-# 🔹 1. Distribución de edad vs tipo de parto
-ggplot(datos_validados, aes(x = Tipar, y = Edadm, fill = grupo_edad)) +
-  geom_boxplot(outlier.size = 0.8) +
-  labs(title = "Edad de la madre vs tipo de parto",
-       x = "Tipo de parto", y = "Edad de la madre") +
-  theme_minimal() +
-  facet_wrap(~grupo_edad)
+# ✅ Función mejorada
+graficar_por_grupo <- function(data, grupo) {
+  grupo_data <- filter(data, grupo_edad == grupo)
 
-# 🔹 2. Tipo de parto según escolaridad (con etiquetas)
-df2 <- datos_validados %>%
-  group_by(grupo_edad, Escolam, Tipar) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  group_by(grupo_edad, Escolam) %>%
-  mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
+  # 🔹 Edad vs tipo de parto
+  print(
+    ggplot(grupo_data, aes(x = Tipar, y = Edadm, fill = Tipar)) +
+      geom_boxplot(outlier.size = 0.8) +
+      labs(title = paste("Edad de la madre vs Tipo de parto (", grupo, ")"), x = "Tipo de parto", y = "Edad") +
+      theme_minimal() +
+      scale_fill_brewer(palette = "Set2")
+  )
 
-ggplot(df2, aes(x = Escolam, y = prop, fill = Tipar)) +
-  geom_bar(stat = "identity", position = "fill") +
-  geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "white") +
-  facet_wrap(~grupo_edad) +
-  labs(title = "Tipo de parto según escolaridad de la madre",
-       x = "Escolaridad", y = "Proporción", fill = "Tipo de parto") +
-  scale_y_continuous(labels = percent_format()) +
-  theme_minimal()
+  # 🔹 Tipo de parto según escolaridad
+  df2 <- grupo_data %>%
+    filter(!is.na(Escolam), !is.na(Tipar)) %>%
+    group_by(Escolam, Tipar) %>%
+    summarise(n = n(), .groups = "drop") %>%
+    group_by(Escolam) %>%
+    mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
 
-# 🔹 3. Estado civil vs escolaridad (con etiquetas)
-df3 <- datos_validados %>%
-  group_by(grupo_edad, Escivm, Escolam) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  group_by(grupo_edad, Escivm) %>%
-  mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
+  print(
+    ggplot(df2, aes(x = Escolam, y = prop, fill = Tipar)) +
+      geom_bar(stat = "identity", position = "fill") +
+      geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "white") +
+      labs(title = paste("Tipo de parto según escolaridad (", grupo, ")"), x = "Escolaridad", y = "Proporción") +
+      scale_fill_brewer(palette = "Set2") +
+      scale_y_continuous(labels = percent_format()) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  )
 
-ggplot(df3, aes(x = Escivm, y = prop, fill = Escolam)) +
-  geom_bar(stat = "identity", position = "fill") +
-  geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "white") +
-  facet_wrap(~grupo_edad) +
-  labs(title = "Escolaridad según estado civil de la madre",
-       x = "Estado civil", y = "Proporción", fill = "Escolaridad") +
-  scale_y_continuous(labels = percent_format()) +
-  theme_minimal()
+  # 🔹 Escolaridad según estado civil
+  df3 <- grupo_data %>%
+    filter(!is.na(Escivm), !is.na(Escolam)) %>%
+    group_by(Escivm, Escolam) %>%
+    summarise(n = n(), .groups = "drop") %>%
+    group_by(Escivm) %>%
+    mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
 
-# 🔹 4. Sitio del parto vs tipo de asistencia (con etiquetas)
-df4 <- datos_validados %>%
-  group_by(grupo_edad, Sitioocu, Asisrec) %>%
-  summarise(n = n(), .groups = "drop") %>%
-  group_by(grupo_edad, Sitioocu) %>%
-  mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
+  print(
+    ggplot(df3, aes(x = Escivm, y = prop, fill = Escolam)) +
+      geom_bar(stat = "identity", position = "fill") +
+      geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "black") +
+      labs(title = paste("Escolaridad según estado civil (", grupo, ")"), x = "Estado civil", y = "Proporción") +
+      scale_fill_viridis_d(option = "C") +
+      scale_y_continuous(labels = percent_format()) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 30, hjust = 1))
+  )
 
-ggplot(df4, aes(x = Sitioocu, y = prop, fill = Asisrec)) +
-  geom_bar(stat = "identity", position = "fill") +
-  geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "white") +
-  facet_wrap(~grupo_edad) +
-  labs(title = "Asistencia médica según sitio del parto",
-       x = "Sitio del parto", y = "Proporción", fill = "Asistencia") +
-  scale_y_continuous(labels = percent_format()) +
-  theme_minimal()
+  # 🔹 Sitio del parto vs asistencia
+  df4 <- grupo_data %>%
+    filter(!is.na(Sitioocu), !is.na(Asisrec)) %>%
+    group_by(Sitioocu, Asisrec) %>%
+    summarise(n = n(), .groups = "drop") %>%
+    group_by(Sitioocu) %>%
+    mutate(prop = n / sum(n), etiqueta = percent(prop, accuracy = 1))
+
+  print(
+    ggplot(df4, aes(x = Sitioocu, y = prop, fill = Asisrec)) +
+      geom_bar(stat = "identity", position = "fill") +
+      geom_text(aes(label = etiqueta), position = position_fill(vjust = 0.5), size = 3, color = "white") +
+      labs(title = paste("Asistencia según sitio del parto (", grupo, ")"), x = "Sitio del parto", y = "Proporción") +
+      scale_fill_brewer(palette = "Set3") +
+      scale_y_continuous(labels = percent_format()) +
+      theme_minimal() +
+      theme(axis.text.x = element_text(angle = 30, hjust = 1))
+  )
+}
+
+# 🟢 Ejecutar para ambos grupos
+graficar_por_grupo(datos_validados, "Adolescente")
+graficar_por_grupo(datos_validados, "Adulta")
 ```
-**1. Edad de la madre vs tipo de parto**
 
-Este gráfico es un **diagrama de caja (boxplot)** que muestra la relación entre la **edad de la madre** y el **tipo de parto**, **segmentada por grupo etario**: *Adolescente* (menores de 20 años) y *Adulta* (20 años o más). Vamos a desglosarlo:
+📊 **Gráfica: Edad de la madre vs Tipo de parto (Adolescente)**
 
-🟧 Eje horizontal (**Tipo de parto**):
-- **Vaginal**
-- **Cesárea**
-- **No especificado**
-- **No aplica**
+🔍 **Análisis**
 
-🟦 Eje vertical (**Edad de la madre**):
-- Rango desde los **10 años** hasta más de **45 años**.
+- Esta gráfica muestra **cajas de bigotes** (boxplots) que representan la distribución de la edad de las madres adolescentes según el tipo de parto.
 
-**Interpretación por grupo:**
+- Los tipos de parto incluyen:
 
-🔴 **Adolescentes (rojo):**
+  - **Vaginal**: Mayor frecuencia, con edad media entre 17 y 18 años.
+  - **Cesárea**: Similar a vaginal, aunque con mayor dispersión hacia edades más tempranas (~13 años).
+  - **No especificado** y **No aplica**: También se concentran entre los 17 y 19 años, aunque con una ligera dispersión a edades más bajas.
+- Se observan algunos **valores atípicos** por debajo de los 14 años en todos los tipos, especialmente en "Cesárea".
 
-- Sus edades están fuertemente concentradas entre **15 y 19 años**.
-- Para **todos los tipos de parto**, la mediana está cerca de los **17-18 años**.
-- Hay presencia de valores atípicos (*outliers*) menores a 15 años (algunas incluso de 10 a 12 años).
-- Las cajas son muy pequeñas porque la edad varía poco en este grupo.
+✅ **Conclusiones**
 
-🟦 **Adultas (turquesa):**
+- **No hay una diferencia significativa de edad** entre los tipos de parto dentro del grupo adolescente, lo que sugiere que la elección del tipo de parto **no está determinada por la edad en este grupo etario**.
+- La mayoría de partos, independientemente de su tipo, ocurren entre los 17 y 19 años.
+- La presencia de partos por cesárea y otras categorías en edades muy tempranas (13–15 años) **podría indicar situaciones de riesgo o embarazos no planificados** que requieren atención especial.
 
-- Tienen una mayor dispersión de edades (de 20 hasta 50+ años).
-- La **mediana** de edad en partos vaginales es alrededor de **25 años**, mientras que en cesáreas y “no especificado” es más alta (27–30 años).
-- Hay más presencia de **outliers hacia arriba** (madres mayores).
+📊 **Gráfica: Tipo de parto según escolaridad (Adolescente)**
 
-**Conclusiones que puedes sacar:**
+🔍 **Análisis**
 
-1. **Las adolescentes tienen partos a una edad muy temprana**, sin importar el tipo de parto.
-2. Las mujeres adultas presentan **más variedad en tipo de parto** y una **dispersión mayor en la edad**.
-3. Las **cesáreas y partos no especificados** tienden a estar más asociados con mujeres adultas (mediana más alta).
-4. El hecho de que las adolescentes tengan partos principalmente vaginales y con baja variación etaria **podría estar relacionado con falta de planificación familiar y acceso a servicios médicos diferenciados.**
+- Esta gráfica representa la **proporción del tipo de parto** (vaginal, cesárea, no especificado, no aplica) en función del nivel de **escolaridad de la madre adolescente**.
 
+- En todos los niveles de escolaridad, el **parto vaginal predomina de forma absoluta**:
 
-**2. Tipo de parto según escolaridad de la madre**
+  - Del 99% al 100% de los casos son partos vaginales.
+- Los partos por **cesárea** y otras categorías representan **menos del 1%** y son prácticamente despreciables en todas las barras.
+- El color de los segmentos es casi indistinguible para los partos no vaginales por su baja frecuencia.
 
-Este gráfico **de barras apiladas y facetado por grupo de edad** muestra la **distribución proporcional del tipo de parto** (`Vaginal`, `Cesárea`, etc.) según la **escolaridad de la madre**, diferenciando entre madres **adolescentes** y **adultas**. a continuación se proporciona una explicación más detallada:
+✅ **Conclusiones**
 
-**¿Qué observamos?**
-
-**Interpretación general:**
-
-- **Eje X (horizontal):** Niveles de escolaridad de la madre (`Escolam`), desde "Ninguna" hasta "Superior".
-- **Eje Y (vertical):** Proporción de partos por cada tipo, expresada como porcentaje del total de partos dentro de cada categoría de escolaridad.
-- **Colores:**  
-
-  - 🔴 Rojo: **Parto Vaginal**  
-  - 🟢 Verde: **Parto Cesárea**  
-  - 🔵 Azul: **No especificado**  
-  - 🟣 Morado: **No aplica** (aunque estos son casi invisibles o inexistentes en este gráfico)
-
-**Hallazgos importantes:**
-
-**Madres adolescentes:**
-
-- El **99%–100%** de los partos son vaginales sin importar el nivel de escolaridad.
-- Las cesáreas son **muy poco frecuentes** (solo 1%).
-- Esto puede deberse a:
-  - Menor acceso a servicios especializados.
-  - Menor probabilidad de embarazos planificados.
-  - Contextos más rurales o vulnerables.
-
- **Madres adultas:**
- 
-- También predominan los partos vaginales (97%–99%), pero:
-  - Hay una **ligera tendencia al aumento de cesáreas** con mayor escolaridad:
-    - Por ejemplo, en nivel **superior**, 2% de cesáreas.
-    - En "No especificado", sube al 3%.
-  - Esto podría reflejar:
-    - Mayor planificación.
-    - Mayor acceso a servicios médicos y partos programados.
-    - Preferencia médica/personal por cesáreas en algunos contextos.
-
-**Conclusión del gráfico:**
-
-- **El tipo de parto está fuertemente dominado por partos vaginales**, especialmente entre las madres adolescentes.
-- Las **madres adultas con mayor nivel educativo** presentan una leve mayor proporción de partos por cesárea.
-- Este patrón **sugiere diferencias en el acceso a servicios de salud o en las decisiones clínicas según edad y escolaridad**.
-
-**3. Escolaridad según estado civil de la madre**
-
-Este gráfico muestra la **relación entre el estado civil y la escolaridad de la madre**, diferenciando entre madres **adolescentes** y **adultas**, con proporciones expresadas en porcentajes.
-
-**Detalles del gráfico:**
-
-- **Eje X (horizontal):** Estado civil de la madre (`Escivm`): Soltera, Casada, Unida, NA.
-- **Eje Y (vertical):** Proporción de cada nivel de escolaridad.
-- **Colores:** Representan los distintos niveles educativos (`Escolam`) desde "Ninguna" hasta "Superior", y se incluye el grupo "NA" (dato faltante).
-- **Facetado:** Dos paneles:
-  - Izquierda: madres **adolescentes**
-  - Derecha: madres **adultas**
-- **Texto sobre cada barra:** porcentaje de cada grupo educativo dentro de cada categoría de estado civil.
-
-**Madres adolescentes:**
-
-- **Alta proporción de NA (desconocido)** en madres **unidas (70%)** y **NA (47%)**, lo que limita el análisis en estos grupos.
-- Entre **solteras y casadas**, hay mayor claridad:
-  - ~27% de madres adolescentes solteras tienen **escolaridad primaria** y otro 27% sin escolaridad.
-  - Solo el 4–5% alcanza **diversificado o superior**.
-- Casadas tienen **ligeramente más escolaridad secundaria y diversificada**.
-
-**Conclusión:** Las madres adolescentes tienden a tener **niveles educativos bajos** (ninguno o primaria), con muy pocos casos de escolaridad media o superior.
-
-**Madres adultas:**
-
-- Mayor diversidad educativa:
-  - Aunque todavía predominan los niveles bajos (Ninguna y Primaria con 27%+), se observa mayor presencia de **secundaria (13–14%)** y **diversificado (11–13%)**.
-  - Algunas casadas tienen hasta 2% con **educación superior**.
-- Las mujeres unidas y solteras tienen escolaridades más bajas comparadas con las casadas.
-
-**Conclusión:** Las madres adultas presentan **mejor perfil educativo**, especialmente en el grupo casado.
-
-**Reflexión clave:**
-
-- Existe una **relación entre estado civil y escolaridad**: las madres casadas (tanto adolescentes como adultas) tienden a tener **más educación**.
-- Las madres adolescentes **unidas o con datos faltantes** tienen niveles de escolaridad extremadamente bajos o desconocidos.
-
-**4. Asistencia médica según sitio del parto**
-
-Este gráfico muestra la **relación entre el sitio del parto y el tipo de asistencia médica recibida**, desagregada por grupo etario de la madre (adolescente vs adulta), y expresada en **proporciones porcentuales**.
-
-**Ejes y elementos clave:**
-
-- **Eje X:** Sitio del parto (`Sitioocu`): Hospital público, Hospital privado, Centro de salud, Domicilio, Otro, NA.
-- **Eje Y:** Proporción de cada tipo de asistencia médica (`Asisrec`): Médico, Enfermera, Partera, Otro.
-- **Colores:** Representan el tipo de asistencia médica.
-- **Facetado:** Se comparan **madres adolescentes** y **madres adultas**.
-- **Etiquetas:** Indican el **porcentaje exacto** que representa cada grupo dentro del total por barra.
-
-**Madres adolescentes:**
-
-- **Hospital público:** 100% con asistencia médica profesional (100% médico).
-- **Hospital privado:** 98% médico, 1% enfermera.
-- **Centro de salud:** 82% médico, pero hay mayor diversidad (2% enfermera, 3% partera, etc.).
-- **Domicilio:** 62% asistidas por **enfermeras**, 29% por médico, 4% por partera.
-- **Otros sitios:** Mayor fragmentación, con 40% partera, 20% otro, y 26% NA (no especificado).
-- **NA (sitio desconocido):** 60% asistencia tipo "Otro", 31% enfermera.
-
-**Conclusión:** Las madres adolescentes que no dan a luz en hospitales tienen mayor probabilidad de ser atendidas por **personal no médico** o incluso parteras.
-
-**Madres adultas:**
-
-- **Hospital público:** 100% médico.
-- **Hospital privado:** 99% médico.
-- **Centro de salud:** 84% médico, pero aparece algo más de asistencia por parteras y enfermeras.
-- **Domicilio:** 54% médico, 40% **enfermera**, 3% partera.
-- **Otros sitios y NA:** distribución similar a adolescentes, pero con más casos asistidos por **parteras (43%)** y "Otro".
-
-**Conclusión:** Aunque las madres adultas también recurren a lugares no institucionales, su proporción de **asistencia médica es mayor** que en las adolescentes.
-
-**Reflexión general:**
-
-- **Los hospitales (públicos y privados)** garantizan asistencia médica profesional.
-- **Los partos en domicilio o sitios alternativos** se asocian con mayor riesgo de **no recibir atención médica profesional**, especialmente en adolescentes.
-- Esto puede estar relacionado con factores como **baja escolaridad, falta de acceso a servicios o decisiones familiares**.
+- El nivel educativo **no parece influir en el tipo de parto** en adolescentes.
+- La altísima proporción de partos vaginales (99–100%) podría reflejar:
+  - Una **preferencia institucional o médica** por evitar cesáreas en adolescentes.
+  - **Limitaciones de acceso** a servicios que permitan elegir otro tipo de parto.
+- La escolaridad no cambia significativamente el patrón, lo que sugiere que en la adolescencia la decisión del tipo de parto **no depende de factores educativos**, sino probablemente de criterios médicos estándar o restricciones del sistema de salud.
 
 
+📊 **Gráfica: Escolaridad según estado civil (Adolescente)**
+
+🔍 **Análisis**
+
+- Esta gráfica muestra la **proporción de niveles educativos** según el **estado civil** de las madres adolescentes.
+- **Observaciones clave por grupo**:
+
+🔸 **Solteras**:
+  - 39% no tienen escolaridad.
+  - 39% tienen primaria.
+  - Solo el 6% ha alcanzado diversificado y apenas el 0% superior.
+
+🔸 **Casadas**:
+  - Distribución similar: 39% sin escolaridad, 34% primaria, 18% secundaria, 8% diversificado, 0% superior.
+
+🔸 **Unidas** (convivientes):
+  - Destaca el **68% sin escolaridad**, mucho más alto que en otros grupos.
+  - El resto con primaria (23%) y muy poca secundaria o más (2% diversificado).
+
+#✅ **Conclusiones**
+
+- **El nivel educativo entre adolescentes es bajo en todos los estados civiles**, pero especialmente alarmante entre las madres **unidas**, donde más de **dos tercios no tienen escolaridad**.
+- Las adolescentes **casadas o solteras** tienen distribuciones educativas similares, aunque ligeramente mejores que las unidas.
+- Estos resultados reflejan una **posible vulnerabilidad social y educativa** en madres adolescentes en unión libre, lo que puede impactar en sus oportunidades futuras y en el bienestar de sus hijos.
+- Sugiere que **la maternidad temprana puede interrumpir significativamente la continuidad educativa**, especialmente en contextos de unión informal.
 
 
+📊 **Gráfica: Asistencia médica según sitio del parto (Adolescente)**
 
+🔍 **Análisis**
+
+- La gráfica relaciona el **sitio del parto** con el tipo de **asistencia recibida** por madres adolescentes.
+- **Hospital público**:  
+  - El 100% de los partos fueron asistidos por **médicos**. Esto muestra una estandarización del servicio.
+  
+- **Hospital privado**:  
+  - Similar tendencia: 98% asistencia médica.
+
+- **Centro de salud**:  
+  - 92% de los partos fueron atendidos por médicos, aunque aparecen pequeñas proporciones de enfermeras, parteras y otros.
+
+- **Domicilio**:  
+  - Aquí cambia radicalmente:  
+    - Solo el **30% fue atendido por médicos**.
+    - **64% por enfermeras**, 5% por parteras, 2% por otras personas.
+    - Esto puede indicar menor acceso a servicios médicos especializados.
+
+- **Otros sitios**:  
+  - Aquí domina la partera (54%) y el 27% fue atendido por “otro”, lo que refleja **asistencia no profesional o informal**.
+  - Solo 8% por médico, 11% por enfermera.
+
+✅ **Conclusiones**
+
+- Existe una **clara relación entre el tipo de asistencia médica y el sitio del parto**:
+
+  - En **centros institucionales** (hospitales o centros de salud), los partos son atendidos casi exclusivamente por médicos.
+  - En **espacios no institucionales** (domicilio u “otros”), aumenta drásticamente la atención por **personal no médico o incluso no calificado**.
+- Las madres adolescentes que no acceden a servicios institucionales corren mayor riesgo por **atención inadecuada**.
+- Esto revela una **brecha en el acceso a servicios de salud adecuados** para adolescentes que no acuden a hospitales o centros públicos.
+
+
+📊 **Gráfica: Edad de la madre vs Tipo de parto (Adulta)**
+
+🔍 **Análisis**
+
+- Esta gráfica compara la edad de las madres adultas según el tipo de parto.
+- Las edades se distribuyen principalmente entre los **20 y 50 años**.
+- La **mediana de edad** varía según el tipo de parto:
+  - **Vaginal**: mediana cercana a los 27 años.
+  - **Cesárea**: mediana un poco mayor, alrededor de los 29 años.
+  - **No especificado**: mediana de aproximadamente 31 años.
+  - **No aplica**: mediana similar a cesárea, pero con menor dispersión.
+
+✅ **Conclusiones**
+
+- Las madres con **partos por cesárea o no especificados** tienden a tener una edad **ligeramente superior** a las que tuvieron partos vaginales.
+- Esto podría deberse a factores médicos relacionados con la edad (mayor probabilidad de cesárea en madres de más edad).
+- Se observa una **mayor dispersión** en los partos no especificados y cesáreas, lo cual sugiere que estos tipos de parto ocurren tanto en edades jóvenes como avanzadas dentro del grupo adulto.
+- La edad media de las madres adultas se mantiene **dentro de un rango reproductivo esperado**, sin grandes extremos.
+
+📊 **Gráfica: Tipo de parto según escolaridad (Adulta)**
+
+🔍 **Análisis**
+
+- La mayoría de partos en **madres adultas**, sin importar el nivel educativo, son **vaginales (97–99%)**.
+- El porcentaje de **cesáreas** es bajo pero levemente **más alto en mujeres con educación superior (2%)** y en aquellas con escolaridad no especificada.
+- Las categorías de “No especificado” y “No aplica” casi no aparecen, lo cual **mejora la interpretación** de la gráfica respecto a la versión anterior.
+- La escolaridad está bien distribuida en la visualización y ahora es **legible**.
+
+✅ **Conclusiones**
+
+- El **tipo de parto no varía significativamente** con la escolaridad en madres adultas: la vía vaginal domina en todos los niveles.
+- Sin embargo, el **leve aumento de cesáreas en mujeres con mayor educación** podría estar relacionado con un mayor acceso a servicios privados de salud o una mayor planificación del parto.
+- No hay evidencia clara de que el nivel educativo influya directamente en el tipo de parto, pero sí podría estar relacionado con **acceso a opciones**.
+
+📊 **Gráfica: Escolaridad según estado civil (Adulta)**
+
+🔍 **Análisis**
+
+- **Madres unidas** presentan el menor nivel educativo: **64% sin escolaridad** y apenas **5% con educación secundaria o más**.
+- Las **madres casadas** y **solteras** muestran una mayor diversidad educativa:
+  - Casadas: 31% primaria, 17% secundaria, 17% diversificado, 8% superior.
+  - Solteras: 34% primaria, 18% secundaria, 13% diversificado, 0% superior.
+- El nivel educativo **superior** se observa casi exclusivamente en madres **casadas**, aunque con una proporción baja.
+- En todas las categorías, el nivel de educación “Ninguna” o “Primaria” representa la **mayoría**.
+
+✅ **Conclusiones**
+
+- El estado civil se relaciona con el nivel educativo:
+
+  - **Las mujeres casadas tienden a tener mayor escolaridad** que las unidas o solteras.
+  - **Las madres unidas son el grupo más vulnerable** en términos educativos.
+  
+- Esto puede reflejar patrones socioculturales donde las mujeres con menor acceso a educación formal se casan o se unen a edades más tempranas o en contextos menos formales.
+
+📊 **Gráfica: Asistencia médica según sitio del parto (Adulta)**
+
+🔍 **Análisis**
+
+- **Hospital público**: Casi **todos los partos fueron atendidos por médicos (100%)**, lo que refleja una alta institucionalización en este tipo de establecimiento.
+- **Hospital privado** y **centros de salud** también presentan una **alta proporción de partos atendidos por médicos** (99% y 92%, respectivamente), aunque aparece una pequeña proporción de otros tipos de asistencia (como enfermeras o parteras).
+- **Partos en domicilio** muestran una **distribución variada**:
+  - Solo 55% fueron asistidos por médicos.
+  - Un 41% fue atendido por **enfermeras**, lo cual resalta la presencia de asistencia profesional fuera del ámbito hospitalario.
+- **Otros lugares** presentan una situación más preocupante:
+  - Mayoritariamente asistidos por **parteras (56%)**.
+  - Alta proporción atendida por **personas sin formación médica formal (28% “Otro”)**.
+
+#✅ **Conclusiones**
+
+- Hay una clara relación entre el **tipo de institución o lugar de parto** y el **tipo de asistencia médica recibida**.
+- Mientras los entornos hospitalarios garantizan una atención por médicos, los nacimientos fuera de hospitales —especialmente en “domicilio” u “otro”— reflejan una mayor vulnerabilidad sanitaria.
+- Esto sugiere una necesidad de **mayor cobertura y acceso a atención profesional** en zonas rurales o de difícil acceso, donde los partos fuera de hospitales son más frecuentes.
+
+🧠 **Conclusiones Generales Comparativas (Adolescentes vs Adultas)**
+
+📌 1. Edad de la madre vs tipo de parto
+
+- En **ambos grupos**, el tipo de parto **más frecuente** es el **vaginal**.
+- **Las adolescentes** tienen una edad más concentrada (mediana ~18 años) y valores menos dispersos.
+- **Las adultas** presentan una mayor dispersión en la edad al momento del parto, especialmente en partos por cesárea o no especificados, indicando una mayor heterogeneidad en su perfil reproductivo.
+
+📌 2. Tipo de parto según escolaridad
+
+- Tanto en **adolescentes** como en **adultas**, el **parto vaginal representa más del 97%** de los casos sin importar el nivel educativo.
+- La **cesárea** es muy poco frecuente, pero su proporción **aumenta ligeramente** en mujeres adultas con mayor escolaridad.
+- No se observan diferencias significativas en adolescentes según escolaridad (probablemente porque la mayoría aún no ha completado ciclos educativos superiores).
+
+📌 3. Escolaridad según estado civil
+
+- En **adolescentes**, los niveles educativos predominantes son **primaria y secundaria**, con un alto porcentaje de mujeres con **ninguna escolaridad**, especialmente en las unidas (68%).
+- En **adultas**, se observa un ligero avance educativo: aunque aún predomina la escolaridad básica, el porcentaje con diversificado y superior es más alto que en adolescentes.
+- En ambos grupos, las **mujeres solteras o casadas tienen mayor escolaridad** que aquellas en unión libre.
+
+📌 4. Asistencia médica según sitio del parto
+
+- Para **ambos grupos**, los partos en hospitales públicos, privados o centros de salud están **principalmente atendidos por médicos (92%–100%)**.
+- Las **diferencias se acentúan en partos domiciliarios o en lugares “otros”**:
+  - En **adolescentes**, hay más partos asistidos por **parteras (54%)** y **enfermeras (64%)**.
+  - En **adultas**, aunque también hay una alta proporción de asistencia no médica, hay **más partos domiciliarios atendidos por médicos (55%)** comparado con adolescentes (30%).
+
+📍 **Conclusión Final**
+
+- La **condición de adolescente** implica una mayor concentración en edades bajas, niveles educativos más limitados y mayor riesgo de partos fuera del sistema formal de salud.
+- Las **mujeres adultas**, aunque muestran mayor diversidad, evidencian mejores condiciones educativas y mayor acceso a servicios de salud institucionalizados.
+- La escolaridad y el estado civil parecen ser factores asociados al tipo de atención recibida y al contexto del parto, por lo que deben ser variables clave en políticas de salud reproductiva.
 
 ## d.	Realicen gráficos exploratorios que les dé ideas del estado de los datos.
-
 
 Para hacer este analisis debemos de profundizar sobre los datos, Por ello vamos a utilizar algunas graficos que representen lo que estamos buscando
 
@@ -679,8 +1149,6 @@ Lo primero es responder a las preguntas por ejemplo
 ¿El sexo del bebé influye en el peso al nacer?
 
 Para ello realizamos el siguiente grafico
-
-
 
 ```{r}
 library(haven)
@@ -727,132 +1195,217 @@ ggplot(datos_cambiados, aes(x = Sexo, y = Peso_Onzas, fill = Sexo)) +
        y = "Peso al Nacer (Onzas)") +
   scale_fill_manual(values = c("blue", "pink")) +  # Colores típicos
   theme_minimal()
-
-
-
-
-
-
-
-
 ```
 
-### Analisis del grafico
-Podemos ver que realmente no afecta en nada el genero en la diferencia de pesos, si se puede ver que solo hay una ligera diferencia de pesos por las mujeres pesando menos pero no es mucho. Asi que puede ser por otros motivos
+🧠 Análisis del gráfico: Distribución del peso al nacer por sexo
 
+La gráfica muestra que existe una ligera diferencia en el peso al nacer entre los recién nacidos hombres (código 1) y mujeres (código 2). En promedio, los niños tienen un peso levemente superior al de las niñas. Esta diferencia se observa tanto en la mediana como en la distribución general de los datos, aunque no es extremadamente pronunciada.
 
+**Conclusiones:**
 
-Otra forma para poder ver que esta afectando el peso de los bebes puede ser la edad en las que sus madres los tuvieorn. 
-Por ello vamos a hacer el siguiente grafico
-
-
-
+- **Sí hay una diferencia observable por sexo.** Aunque la diferencia entre medianas no es muy grande, se mantiene constante en toda la distribución.
+- **Los niños tienden a nacer con un peso mayor que las niñas.** Esto es consistente con hallazgos biomédicos que indican que el sexo masculino suele estar asociado con un peso ligeramente superior al nacer.
+- **La diferencia no es drástica**, pero sí lo suficientemente clara como para ser tomada en cuenta como una variable potencialmente influyente en el análisis del peso al nacer.
+- Para evaluar si esta diferencia es estadísticamente significativa, se recomienda complementar este análisis gráfico con una prueba de hipótesis como el test de Wilcoxon o t-test.
 
 ```{r}
 library(haven)
 library(dplyr)
 library(ggplot2)
+library(viridis)
+
+# Cargar archivo
+load("datos_nacimientos_de_2009_a_2022.RData")
+
+# Detectar automáticamente el data frame
+obj <- ls()[sapply(ls(), function(x) is.data.frame(get(x)))]
+if (length(obj) == 0) stop("❌ No se encontró ningún data frame cargado.")
+datos_limpios <- get(obj[1])
 
 # Etiquetas para tipo de parto
 etiquetas_tipar <- c("1" = "Vaginal", "2" = "Cesárea", "3" = "No especificado", "4" = "No aplica")
-
-# Variables que interesan
-vars_numericas <- c("Edadp", "Libras", "Onzas")
 vars_categoricas <- c("Sexo", "Escivp", "Escolap", "Asisrec", "Sitioocu")
 
 tryCatch({
-  # Convertir manualmente Tipar con etiquetas
+
+  # Reetiquetar Tipar si existe
   if ("Tipar" %in% names(datos_limpios)) {
-    datos_limpios$Tipar <- as.character(datos_limpios$Tipar)
-    datos_limpios$Tipar <- recode(datos_limpios$Tipar, !!!etiquetas_tipar)
+    datos_limpios$Tipar <- recode(as.character(datos_limpios$Tipar), !!!etiquetas_tipar)
     datos_limpios$Tipar <- factor(datos_limpios$Tipar)
   }
 
-  # Convertir variables numéricas
+  # Limpieza y transformación
   datos_limpios <- datos_limpios %>%
     mutate(
-      Edadp = suppressWarnings(as.numeric(as.character(Edadp))),
-      Libras = suppressWarnings(as.numeric(as.character(Libras))),
-      Onzas = suppressWarnings(as.numeric(as.character(Onzas))),
-      peso_total = Libras + (Onzas / 16)  # Calcular peso total en libras
+      Edadp = as.numeric(as.character(Edadp)),
+      Libras = as.numeric(as.character(Libras)),
+      Onzas = as.numeric(as.character(Onzas)),
+      peso_total_lb = Libras + (Onzas / 16)
+    ) %>%
+    filter(
+      Edadp >= 10 & Edadp <= 90,
+      Libras >= 1 & Libras <= 10,
+      Onzas >= 0 & Onzas <= 15
     )
 
-  # Convertir categóricas a factor si existen
   for (var in vars_categoricas) {
     if (var %in% names(datos_limpios)) {
       datos_limpios[[var]] <- as.factor(as.character(datos_limpios[[var]]))
     }
   }
 
-  # Filtrar valores válidos
-  datos_limpios <- datos_limpios %>%
-    filter(Edadp < 90, Libras <= 10, Onzas <= 15)
+  # 🔹 Opción A: geom_bin2d (más visual y rápido)
+  print(ggplot(datos_limpios, aes(x = Edadp, y = peso_total_lb)) +
+          geom_bin2d(bins = 50) +
+          scale_fill_viridis_c() +
+          labs(
+            title = "Edad de la madre vs Peso al nacer (geom_bin2d)",
+            subtitle = "Peso en libras = Libras + Onzas/16",
+            x = "Edad de la madre",
+            y = "Peso total (libras)"
+          ) +
+          theme_minimal())
 
-  # 📊 Peso vs Edad de la madre
-  if ("Edadp" %in% names(datos_limpios) && "peso_total" %in% names(datos_limpios)) {
-    print(ggplot(datos_limpios, aes(x = Edadp, y = peso_total)) +
-            geom_point(color = "steelblue", alpha = 0.6) +
-            labs(title = "Relación entre Edad de la madre y Peso al nacer",
-                 x = "Edad de la madre (años)", y = "Peso al nacer (libras)") +
-            theme_minimal())
-  }
+  # 🔹 Opción B: Datos resumidos y tamaño proporcional a frecuencia
+  datos_resumidos <- datos_limpios %>%
+    group_by(Edadp, peso_total_lb) %>%
+    summarise(n = n(), .groups = "drop")
+
+  print(ggplot(datos_resumidos, aes(x = Edadp, y = peso_total_lb, size = n)) +
+          geom_point(alpha = 0.5, color = "steelblue") +
+          scale_size_continuous(range = c(0.5, 6)) +
+          labs(
+            title = "Edad de la madre vs Peso al nacer (tamaño ~ frecuencia)",
+            subtitle = "Cada punto representa una combinación única",
+            x = "Edad de la madre",
+            y = "Peso total (libras)",
+            size = "Frecuencia"
+          ) +
+          theme_minimal())
 
   gc()
 
 }, error = function(e) {
   message("❌ Error: ", e$message)
 })
-
-
 ```
 
+📊 **Análisis de la gráfica**
 
-### Analisis del grafico
+1. **Ejes y variables**:
+   - **Eje X**: Edad de la madre (años), desde los 10 hasta los 90.
+   - **Eje Y**: Peso del bebé al nacer (en libras, combinando libras + onzas/16).
+   - **Color (intensidad)**: Cantidad de observaciones en cada bin (bloque), representando densidad.
 
-Podemos ver que la mayor concentracion de los pesos es en 6  de kilos, y tambien que las madres que mas son las que tienen estos bebes son madres mucho mas grandes. De hecho se ve que las jovenes suelen dar a luz un rango de bebes mas pesados. Pero mientras mas jovenes tambien se ve que los pesos de los bebes suelen ser menos pesados al igual que las mas grandes. 
+2. **Distribución central**:
+   - La mayor densidad de nacimientos (color amarillo intenso) se concentra entre:
+     - **Edad de la madre**: 20 a 30 años.
+     - **Peso al nacer**: entre **6.5 y 7.5 libras**.
+   - Estas combinaciones presentan hasta **más de 80,000 nacimientos** por bloque, según la escala de color.
 
-Esto producto a que las madres jovenes y mas grandes suelen tener mas problemas en el tiempo de gestacion ya sea por prematura o ser demasiado grandes al tener su hijo , lo que provoca nacimientos prematuros . 
+3. **Patrones laterales**:
+   - A medida que la edad de la madre aumenta (más allá de los 40 años), la cantidad de nacimientos disminuye considerablemente (bloques más oscuros).
+   - También se observa una mayor dispersión en el peso de los recién nacidos a edades extremas (tanto madres adolescentes como mayores).
 
+4. **Variabilidad del peso**:
+   - Si bien el peso promedio se mantiene estable en el rango central de edad, se observan más valores atípicos (peso bajo o alto) fuera del rango de 20–35 años.
 
+✅ **Conclusiones**
 
+- **La mayoría de los nacimientos** ocurren en mujeres entre los 20 y 30 años, y los bebés en ese grupo tienen un **peso promedio normal** (6.5–7.5 lb).
+- **La edad de la madre sí influye** ligeramente en la variabilidad del peso:
+  - Madres muy jóvenes o muy mayores presentan mayor dispersión y casos con bajo peso al nacer.
+- **No hay una tendencia lineal directa** entre mayor edad y mayor o menor peso, pero sí hay una mayor dispersión conforme la edad se aleja de la mediana poblacional.
 
+📊 **Análisis de la gráfica**
 
-Sabiendo lo anterior podemos plantear la pregunta
+1. **Ejes y significado**:
+   - **Eje X**: Edad de la madre (de 10 a 90 años).
+   - **Eje Y**: Peso al nacer en libras (calculado como `libras + onzas/16`).
+   - **Tamaño del punto**: Representa la cantidad de casos para cada combinación específica de edad y peso.
 
-### Cuantos embarazos se pueden catalogar como adolescentes.
+2. **Zona de mayor concentración**:
+   - La mayoría de los puntos grandes se concentran entre:
+     - **Edad de la madre**: 20 a 30 años.
+     - **Peso al nacer**: 6.5 a 7.5 libras.
+   - Estos puntos grandes indican que estas combinaciones son **extremadamente frecuentes** (alrededor de 30,000 casos por punto).
+
+3. **Distribución general**:
+   - Se observa una **forma ovalada horizontal**, con menor frecuencia en los extremos de edad.
+   - A edades más tempranas (<20) o más avanzadas (>40), hay **más dispersión** en el peso al nacer, aunque con menor frecuencia.
+
+4. **Frecuencia de combinaciones atípicas**:
+   - Puntos pequeños alrededor de los extremos (edades > 50 y pesos < 4 lb o > 9 lb) muestran que esas combinaciones existen, pero son **poco comunes**.
+
+✅ **Conclusiones**
+
+- La mayoría de los nacimientos ocurren en mujeres de entre 20 y 30 años, y sus bebés nacen con un peso típico (entre 6.5 y 7.5 libras).
+- El tamaño de los puntos confirma que **estas combinaciones son las más frecuentes**, superando las 30,000 ocurrencias.
+- A edades extremas de la madre (menores de 20 o mayores de 40 años), el peso al nacer es más variable y hay menor cantidad de casos.
+- Esta representación visual es muy útil para identificar **zonas densas y outliers** al mismo tiempo, y muestra claramente cómo el **peso al nacer tiende a estabilizarse en edades reproductivas óptimas**.
+
+Sabiendo lo anterior podemos plantear la pregunta...
+
+**¿Cuantos embarazos se pueden catalogar como adolescentes?**
 
 Para ello realizamos el siguiente grafico. 
-
-
 
 ```{r}
 library(ggplot2)
 library(dplyr)
 
-# Definir el límite de edad para embarazo adolescente
+# Definir el límite de edad para considerar embarazo adolescente (< 20 años)
 limite_edad <- 20
 
-# Filtrar datos de embarazos adolescentes
+# Clasificación y cálculo del peso en onzas
 datos_adolescentes <- datos_limpios %>%
-  mutate(Embarazo_Adolescente = ifelse(Edadp < limite_edad, "Adolescente", "No Adolescente")) %>%
-  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+  mutate(
+    Embarazo_Adolescente = ifelse(Edadp < limite_edad, "Adolescente", "No Adolescente"),
+    Peso_Onzas = (Libras * 16) + Onzas
+  ) %>%
+  filter(!is.na(Peso_Onzas))  # Asegura que no haya NA en el eje Y
 
-# 📊 Gráfico de caja comparando el peso de los bebés según embarazo adolescente o no
+# 📊 Gráfico de caja del peso al nacer por tipo de embarazo
 ggplot(datos_adolescentes, aes(x = Embarazo_Adolescente, y = Peso_Onzas, fill = Embarazo_Adolescente)) +
-  geom_boxplot(alpha = 0.7) +
-  labs(title = "Distribución del Peso al Nacer según Embarazo Adolescente",
-       x = "Tipo de Embarazo",
-       y = "Peso al Nacer (Onzas)") +
-  scale_fill_manual(values = c("red", "green")) +  # Colores personalizados
+  geom_boxplot(alpha = 0.7, outlier.shape = 16, outlier.size = 1.5) +
+  labs(
+    title = "Distribución del Peso al Nacer según Tipo de Embarazo",
+    subtitle = "Comparación entre embarazos adolescentes (<20 años) y no adolescentes",
+    x = "Tipo de Embarazo",
+    y = "Peso al Nacer (Onzas)"
+  ) +
+  scale_fill_manual(values = c("Adolescente" = "#F8766D", "No Adolescente" = "#00BA38")) +
   theme_minimal()
-
 ```
+📊 **Análisis de la gráfica**
 
+**Título**: *Distribución del Peso al Nacer según Tipo de Embarazo*  
+**Comparación**: Madres adolescentes (< 20 años) vs. madres no adolescentes (≥ 20 años)  
+**Unidad**: Peso en onzas (Libras × 16 + Onzas)
 
+#### Observaciones clave:
+1. **Mediana más baja**:
+   - Los bebés nacidos de madres adolescentes presentan una **mediana de peso menor** que los nacidos de madres adultas.
+   - Esto indica que en promedio, los recién nacidos de embarazos adolescentes pesan menos.
 
-Aqui si podemos ver que la media de los embarazos no adolescentes son menor a los que no lo son, aunque se observa que realmente no es tanta la diferencia entre ambos tipos de embarazos. Pero tambien podemos notar que si existen mas niños con menor peso que al no ser madres adolescentes las progenitoras. Esto puede indicar una correlacion entre el peso y salud de los niños con respecto a  la edad de las madres. 
+2. **Mayor dispersión en adolescentes**:
+   - La caja (rango intercuartílico) de los embarazos adolescentes es ligeramente más compacta, pero hay **outliers inferiores más extremos**, es decir, bebés con pesos notablemente bajos.
+   - Esto puede asociarse a **mayor riesgo de partos prematuros o bajo peso al nacer** en este grupo.
 
-Esto tiene sentido, al ser madres adolescentes, puede ser que debido a la naturaleza de no llegar a  su etapa adulta , tengan complicaciones y provoquen que los niños nazcan de manera prematura. 
+3. **Presencia de valores atípicos en ambos grupos**:
+   - Aunque ambos grupos tienen outliers, en los embarazos adolescentes estos se concentran en la parte baja del gráfico.
+
+**🧠 Conclusiones**
+
+- **Sí existe una diferencia significativa** en el peso al nacer entre bebés de madres adolescentes y no adolescentes, aunque no es drástica, **es sistemática y clínicamente relevante**.
+- Este patrón refuerza la hipótesis de que el embarazo adolescente puede estar asociado a:
+  - Menor peso al nacer.
+  - Mayor incidencia de partos prematuros.
+  - Condiciones desfavorables para el desarrollo fetal.
+- La diferencia justifica seguir analizando esta población con más detalle, por ejemplo:
+  - ¿En qué regiones se concentran más los embarazos adolescentes?
+  - ¿Cómo ha evolucionado la tasa de embarazos adolescentes a lo largo del tiempo?
+  - ¿Existen diferencias en el acceso a salud prenatal según edad?
 
 Por lo que conociendo esto podemos ponernos a preguntar  lo siguiente. 
 
