@@ -3,7 +3,7 @@ title: "Proyecto 3. Avances 1. Eda y Clustering"
 author: 
   - "Pablo Daniel Barillas Moreno, Carné No. 22193"
   - "Mathew Cordero Aquino, Carné No. 22982"
-   - "Rafael Andres Chivalan 21534"
+   - "Rafael Andres Chivalan, Carné No. 21534"
 output:
   html_document: default
   pdf_document:
