@@ -1680,7 +1680,6 @@ Hasta este momento hemos definido que una gran cantidad de madres son adolescent
 
 Pero tambien queremos ver el acceso a hospitales tanto para  madres adolescentes como no. Ello nos explicaria el contexto economico de la misma y asi darnos una idea de los nacimientos en Guatemala. 
 
-
 **Acceso a hospitales por madres adolescentes**
 
 ```{r}
@@ -1707,15 +1706,89 @@ ggplot(datos_adolescente_vs_no, aes(x = Embarazo_Adolescente, fill = Asistencia_
        fill = "Asistencia Médica") +
   scale_fill_manual(values = c("green", "red"), labels = c("Sí", "No")) +  
   theme_minimal()
-
-
 ```
 
-**Analisis**
+**🩺 Análisis de la Asistencia Médica en el Nacimiento según Edad de la Madre**
 
-Podemos ver que la mayoria de veces tanto en mujers no adolescentes como no , la mayoria no recibe atencion medica durante el parto, pero se puede observar que la diferencia entre mujeres no adolescentes es mas evidente, muy posiblemente debido a que un embarazo de este estilo es mas peligroso que uno normal y por ende se suelen practicar este tipo de cosas para evitar problemas. 
+El gráfico muestra la cantidad de nacimientos con y sin asistencia médica profesional, comparando entre madres adolescentes y no adolescentes. Se observa que una gran proporción de nacimientos **no cuentan con atención médica formal**, siendo esta situación **más marcada entre las madres adolescentes**.
 
-Esto es un indicativo de lo riesgoso que puede ser un parte tal asi , por ende nos podemos hacer la siguiente pregunta de analisis para completar nuestro analisis exploratorio. 
+Esto es alarmante, ya que el embarazo adolescente conlleva **mayores riesgos obstétricos y neonatales**, como parto prematuro, bajo peso al nacer o complicaciones en el parto. La falta de atención médica institucional agrava esta situación.
+
+Un factor importante a considerar es la **presencia de comadronas o parteras tradicionales**, especialmente en comunidades rurales o indígenas. En muchas áreas del país, **las comadronas son las encargadas de atender los partos**, debido a la lejanía de los centros de salud, la desconfianza hacia los servicios médicos institucionales o por tradición cultural. 
+
+Sin embargo, **los registros oficiales muchas veces no contabilizan a las comadronas como asistencia médica formal**, clasificando estos nacimientos como "sin atención médica", aunque en realidad sí hubo acompañamiento. Esto puede **subestimar la cobertura real**, pero también evidencia una **falta de integración de estas figuras clave al sistema de salud pública**.
+
+Por tanto, es necesario:
+
+- **Reconocer e incorporar a las comadronas** dentro de los sistemas de salud comunitarios.
+- Brindarles **capacitación continua** y recursos para reducir riesgos durante el parto.
+- Generar **políticas interculturales de salud**, donde se respeten las tradiciones pero se garantice la seguridad del binomio madre-hijo.
+
+```{r}
+library(ggplot2)
+library(dplyr)
+
+# Cargar archivo y limpiar datos (como ya lo tienes)
+ruta <- "./datos_nacimientos_de_2009_a_2022.RData"
+load(ruta)
+
+datos_limpios <- datos_completos %>%
+  mutate(
+    Edadp = as.numeric(Edadp),
+    Edadm = as.numeric(Edadm),
+    Libras = as.numeric(Libras),
+    Onzas = as.numeric(Onzas),
+    Tohite = as.numeric(Tohite),
+    Tohinm = as.numeric(Tohinm),
+    Tohivi = as.numeric(Tohivi)
+  ) %>%
+  filter(
+    Edadp >= 10 & Edadp <= 90,
+    Edadm >= 10 & Edadm <= 100,
+    Libras >= 1 & Libras <= 10,
+    Onzas >= 0 & Onzas <= 15,
+    Tohite >= 0 & Tohite <= 20,
+    Tohinm >= 0 & Tohinm <= 20,
+    Tohivi >= 0 & Tohivi <= 20
+  )
+
+# Crear variable binaria de embarazo adolescente y filtrar parteras
+datos_parteras <- datos_limpios %>%
+  mutate(Embarazo_Adolescente = ifelse(Edadp < 20, "Adolescente", "No Adolescente")) %>%
+  filter(Asisrec == 3)  # 3 = Partera en tu codificación numérica
+
+# Contar partos atendidos por parteras
+conteo_parteras <- datos_parteras %>%
+  group_by(Embarazo_Adolescente) %>%
+  summarise(Partos_Con_Partera = n(), .groups = "drop")
+
+# 📊 Gráfico
+ggplot(conteo_parteras, aes(x = Embarazo_Adolescente, y = Partos_Con_Partera, fill = Embarazo_Adolescente)) +
+  geom_bar(stat = "identity", alpha = 0.8, width = 0.5) +
+  labs(
+    title = "Partos Atendidos por Comadronas según Edad de la Madre",
+    subtitle = "Comparación entre embarazos adolescentes y no adolescentes",
+    x = "Tipo de Embarazo",
+    y = "Número de Partos con Comadrona",
+    fill = "Tipo de Embarazo"
+  ) +
+  scale_fill_manual(values = c("Adolescente" = "#F8766D", "No Adolescente" = "#00BFC4")) +
+  theme_minimal()
+```
+**🔍 Análisis**
+
+La gráfica muestra el número de partos atendidos por comadronas (parteras) diferenciando entre madres adolescentes y no adolescentes. A simple vista, se observa que la gran mayoría de los partos asistidos por comadronas corresponden a madres no adolescentes. Las madres adolescentes representan solo una fracción relativamente pequeña de los partos atendidos por este tipo de asistencia tradicional.
+
+Este hallazgo sugiere que las madres adultas pueden estar más inclinadas a optar por atención con comadronas, posiblemente por razones culturales, económicas o de accesibilidad geográfica, ya que las comadronas suelen tener mayor presencia en comunidades rurales o con menor acceso a servicios médicos institucionales. Por otro lado, las madres adolescentes podrían estar teniendo más partos en entornos institucionales o, en muchos casos, sin ninguna asistencia médica formal (como se mostró en otras gráficas previas).
+
+También puede interpretarse que las adolescentes, al encontrarse en una etapa más vulnerable, tienen menos agencia o decisión sobre el tipo de asistencia durante el parto, lo que puede deberse a factores sociales, familiares o estructurales.
+
+**✅ Conclusiones**
+
+- Los partos atendidos por comadronas son significativamente más frecuentes en mujeres adultas que en adolescentes.
+- Las madres adolescentes tienen menor representación en prácticas de atención tradicional, lo que puede implicar una desconexión con las redes comunitarias o decisiones tomadas por terceros.
+- Este tipo de atención (comadronas) sigue siendo una opción relevante en el sistema de salud no formal, especialmente entre mujeres adultas.
+- Se recomienda considerar políticas públicas que reconozcan el papel de las comadronas y promuevan una mayor articulación entre estas prácticas y los servicios médicos institucionales, especialmente para poblaciones vulnerables como las adolescentes.
 
 **¿Las madres jovenes que tanta diferencia tenian con los padres de los niños?**
 
@@ -1723,54 +1796,113 @@ Para esto hacemos una analisis de edad
 
 ```{r}
 library(ggplot2)
-
+ruta <- "./datos_nacimientos_de_2009_a_2022.RData"
+# Cargar el archivo RData
+load(ruta)
+# Crear una nueva variable con el peso total en onzas sin modificar Libras y Onzas originales
+datos_limpios <- datos_completos %>%
+ mutate(
+ Edadp = as.numeric(Edadp),
+ Edadm = as.numeric(Edadm),
+ Libras = as.numeric(Libras),
+ Onzas = as.numeric(Onzas),
+ Tohite = as.numeric(Tohite),
+ Tohinm = as.numeric(Tohinm),
+ Tohivi = as.numeric(Tohivi)
+ ) %>%
+ filter(
+ Edadp >= 10 & Edadp <= 90,
+ Edadm >= 10 & Edadm <= 100,
+ Libras >= 1 & Libras <= 10,
+ Onzas >= 0 & Onzas <= 15,
+ Tohite >= 0 & Tohite <= 20,
+ Tohinm >= 0 & Tohinm <= 20,
+ Tohivi >= 0 & Tohivi <= 20
+ )
+datos_cambiados <- datos_limpios %>%
+ mutate(Peso_Onzas = (Libras * 16) + Onzas)
+datos_cambiados <- datos_cambiados %>%
+ mutate(Diferencia_Edad = Edadp - Edadm)
 # 📊 Gráfico de densidad de la diferencia de edad entre padres y madres
 ggplot(datos_cambiados, aes(x = Diferencia_Edad)) +
-  geom_density(fill = "blue", alpha = 0.5) +
-  labs(title = "Distribución de la Diferencia de Edad entre Padres y Madres",
-       x = "Diferencia de Edad (Padre - Madre)",
-       y = "Densidad") +
-  theme_minimal()
-
-
-
+ geom_density(fill = "blue", alpha = 0.5) +
+ labs(title = "Distribución de la Diferencia de Edad entre Padres y Madres",
+ x = "Diferencia de Edad (Padre - Madre)",
+ y = "Densidad") +
+ theme_minimal()
 ```
+**📊 Análisis del Gráfico: Distribución de la Diferencia de Edad entre Padres y Madres**
 
-**Analisis de los Datos**
+Este gráfico de densidad muestra la distribución de la diferencia de edad entre los padres y madres de los nacimientos registrados en Guatemala entre 2009 y 2022. La variable "Diferencia de Edad" se calculó como `Edad del Padre - Edad de la Madre`.
 
-Podemos ver que la diferencia de edad entre los padres es bastante alto la mayoria de 5 a 10 años. Aunque se ve que una gran parte tambien son de mayor a 10 años. Esto puede ser una demostracion de un ambiente abusivo e incluso en muchos casos hasta ilegal, recordemos que la mayoria son mujeres entre 14 y 17 y una diferencia de 5 o 10 años ya te hace un adulto. 
+**🔍 Observaciones:**
 
-Como ultimo punto queremos ver cuales son los grupos etnicos mas afectados por recibir poca atencion, y especificamente en la poblacion de madres adolescentes. Cual de todos los grupos etnicos tiene mayor cantidad de madres adolescentes .  
+- La distribución tiene una forma aproximadamente **simétrica**, con una fuerte concentración de valores alrededor del **cero**, lo que indica que, en la mayoría de los casos, la edad de los padres y madres es similar.
+- Sin embargo, el **pico más alto** está ligeramente **a la derecha del cero**, lo cual sugiere que en la mayoría de los casos **el padre es ligeramente mayor que la madre**.
+- También se observan **colas más largas hacia la derecha**, lo que indica que **existen casos donde los padres son considerablemente mayores que las madres**, con diferencias que superan los 40 años.
+- En el extremo izquierdo hay pocos casos en que **la madre es mayor que el padre**, y la densidad en esa región es muy baja.
+
+**📌 Conclusiones:**
+
+1. ✅ **La norma general es que los padres son mayores que las madres**, aunque la diferencia suele ser de pocos años. Esto es coherente con tendencias demográficas observadas en muchos países latinoamericanos.
+   
+2. ⚠️ **Existen casos extremos donde los padres tienen 30, 40 o más años de diferencia respecto a las madres**. Esto puede ser preocupante, especialmente si se trata de madres adolescentes, ya que estas situaciones podrían estar relacionadas con **desigualdades de poder, dinámicas coercitivas** o incluso situaciones de riesgo legal (UNFPA, 2022).
+
+3. 🔍 Esta diferencia de edad podría ser una **variable relevante para estudios de riesgo social, abuso o relaciones asimétricas**, por lo que se recomienda cruzarla con otras variables como edad materna, escolaridad y estado civil.
+
+4. 🛑 **La política pública y los programas de protección a menores deben tener en cuenta estas disparidades**, ya que pueden tener implicaciones en la salud maternoinfantil y los derechos de las adolescentes.
 
 ```{r}
-# Filtrar solo madres menores de edad
+library(ggplot2)
+library(dplyr)
+
+# Diccionario para nombres de grupos étnicos válidos
+etiquetas_etnia <- c(
+  "1" = "Maya",
+  "2" = "Mestizo/Ladino",
+  "3" = "Xinca",
+  "4" = "Garífuna",
+  "5" = "Otro"
+)
+
+# Filtrar madres adolescentes con grupo étnico válido (1 al 5)
 madres_adolescentes <- datos_cambiados %>%
-  filter(Edadm < 18) %>%
-  count(Gretnm)  # Contar cantidad de casos por grupo étnico
+  filter(Edadm < 18, Gretnm %in% names(etiquetas_etnia)) %>%
+  count(Gretnm) %>%
+  mutate(Grupo_Etnico = recode(as.character(Gretnm), !!!etiquetas_etnia))
 
-# 📊 Gráfico de barras
-ggplot(madres_adolescentes, aes(x = reorder(Gretnm, -n), y = n, fill = Gretnm)) +
-  geom_bar(stat = "identity", alpha = 0.7) +
-  labs(title = "Cantidad de Madres Adolescentes por Grupo Étnico",
-       x = "Grupo Étnico de la Madre",
-       y = "Cantidad de Madres Adolescentes") +
+# 📊 Gráfico de barras corregido
+ggplot(madres_adolescentes, aes(x = reorder(Grupo_Etnico, -n), y = n, fill = Grupo_Etnico)) +
+  geom_bar(stat = "identity", alpha = 0.8) +
+  labs(
+    title = "Cantidad de Madres Adolescentes por Grupo Étnico",
+    subtitle = "Solo se incluyen grupos étnicos válidos (1 a 5)",
+    x = "Grupo Étnico de la Madre",
+    y = "Cantidad de Madres Adolescentes",
+    fill = "Grupo Étnico"
+  ) +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  scale_fill_brewer(palette = "Set3", guide = "none") +
-  ylim(0, 20000)  # Ajusta este valor según la escala que necesites
-
-
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
 ```
+**📊 Análisis del Gráfico: Cantidad de Madres Adolescentes por Grupo Étnico**
 
-**Analisis**
+Este gráfico muestra la cantidad total de madres adolescentes (menores de 18 años) en Guatemala entre los años 2009 y 2022, desagregado por grupo étnico. Se han incluido únicamente los grupos étnicos válidos reportados por el INE, específicamente los códigos del 1 al 5 (en este caso, solo se visualizan **Maya** y **Mestizo/Ladino**, que son los predominantes en los datos).
 
-Podemos ver que el grupo etnico con mas madres adolescentes es el maya siendo el 1, siguiendole el Garifuna  y el mestizo no presentandose en la grafica de forma aparente, lo que demuestra que uno de los grupos mas vulnerables para ser madres adolescentes es el maya 
+**🔍 Observaciones:**
 
-**Conclusiones**
-Esto va muy en la linea si nos ponemos a pensar en lo que hemos analizado, pues vimos que el departamento de Alta Verapaz tiene una gran cantidad de madres adolescentes, y siendo el maya el grupo etnico mas comun puede ser debido a la zona en donde se encuentra mas . Tambien se observo que si bien la diferencia de edad no es tan grande en madres adolescentes si es muy significativa y en algunos casos hasta ilegal. 
+- El grupo **Maya** presenta una ligera **mayor cantidad de madres adolescentes** en comparación con el grupo **Mestizo/Ladino**.
+- La diferencia no es drástica, pero es significativa considerando el contexto cultural, geográfico y socioeconómico de cada grupo.
+- El resto de grupos étnicos (Xinca, Garífuna, Otro) no aparecen en el gráfico posiblemente por su baja representación en el conjunto de datos.
 
-Obervamos que muchos de las madres adolescentes no reciben atencion medica al momento de dar a luz, pero es mucho mayor el porcentaje que las que no debiedo a las complicaciones de este embarazo, tambien se observo que existe cierta correelacion entre el peso de los bebes nacidos y de la edad de sus madres mostrando que muy posiblemente madres muy jovenes provoquen el nacimiento de bebes prematuros.
+**📌 Conclusiones:**
 
+1. **Mayor prevalencia en población indígena**: El hecho de que el grupo Maya tenga un número ligeramente superior de maternidad adolescente puede estar relacionado con factores estructurales como el acceso limitado a educación sexual, atención médica y programas de prevención en comunidades rurales y con mayoría indígena.
+   
+2. **Distribución desigual de oportunidades**: Las diferencias pueden reflejar desigualdades en el acceso a servicios educativos y de salud entre grupos étnicos. Esto es consistente con otros estudios en América Latina que muestran mayores tasas de embarazo adolescente en poblaciones indígenas (UNFPA, 2018).
+
+3. **Necesidad de intervención culturalmente sensible**: Los datos sugieren que los programas de prevención deben adaptarse a las características socioculturales de cada grupo étnico, especialmente en las comunidades mayas donde persisten brechas de acceso a recursos básicos.
+
+4. **Datos faltantes o no especificados**: Aunque en este gráfico se excluyen los valores no válidos o no especificados (como el código 9 o NA), es importante reconocer que su presencia en el dataset indica una oportunidad para mejorar los procesos de recolección de datos del INE.
 
 ### e.	Hagan un agrupamiento “clustering” e interpreten los resultados. 
 
@@ -1783,28 +1915,54 @@ Obervamos que muchos de las madres adolescentes no reciben atencion medica al mo
 
 ### a.	Describan la situación problemática que los lleva a plantear un problema a resolver.
 
-LEl análisis revela una alta incidencia de maternidad adolescente en el grupo étnico maya, seguido por el garífuna, mientras que en el mestizo no se observa una presencia significativa. Esta situación sugiere una relación entre el embarazo adolescente y la ubicación geográfica, ya que en regiones como Alta Verapaz, donde predomina la población maya, se registran altos índices de madres adolescentes.
+El análisis exploratorio realizado sobre los datos de nacimientos en Guatemala entre los años 2009 y 2022 permite identificar una problemática de gran relevancia social y de salud pública: la **alta incidencia de maternidad en adolescentes**, particularmente entre mujeres menores de 20 años. Este fenómeno no se presenta de manera uniforme en todo el país, sino que tiene una clara **distribución geográfica y étnica**, lo cual sugiere la existencia de condiciones estructurales que favorecen su aparición en determinados contextos sociales y culturales.
 
-Además, se ha identificado una diferencia de edad notable entre las madres adolescentes y sus parejas, en algunos casos alcanzando niveles preocupantes desde un punto de vista legal y social. Esta disparidad de edad puede implicar relaciones desiguales de poder, que afectan la autonomía y el bienestar de las adolescentes.
+Los hallazgos revelan que los **grupos étnicos indígenas**, en particular el grupo **maya**, presentan una tasa significativamente más alta de embarazos adolescentes en comparación con otros grupos como el mestizo. El grupo garífuna también refleja una incidencia considerable. Esta concentración de casos se observa principalmente en departamentos del interior del país como **Alta Verapaz, Huehuetenango, Quiché y Jalapa**, donde la presencia de pueblos originarios es mayor y donde persisten desafíos relacionados con la pobreza, el acceso a la educación, y la infraestructura de salud. En estas regiones, el embarazo adolescente no solo representa un problema de salud, sino también una manifestación de **desigualdades históricas y estructurales**.
 
-Otro factor crítico es la falta de acceso a atención médica en el momento del parto, lo que aumenta los riesgos tanto para la madre como para el bebé. Se ha observado que las complicaciones durante el embarazo en adolescentes pueden estar relacionadas con nacimientos prematuros y bajo peso en los recién nacidos.
+Asimismo, se ha identificado una **disparidad importante en la edad entre las madres adolescentes y sus parejas**, siendo común encontrar diferencias de edad que superan los 10 años. Esta brecha generacional plantea preocupaciones éticas, legales y sociales, ya que podría estar relacionada con **dinámicas de poder desiguales** dentro de las relaciones, en las que las adolescentes tienen una participación limitada en la toma de decisiones sobre su salud sexual y reproductiva. En contextos rurales o de alta vulnerabilidad, es frecuente que estas uniones no sean producto del consentimiento informado, sino de presiones familiares, culturales o económicas.
 
-Estos hallazgos evidencian la vulnerabilidad de ciertos grupos étnicos y regiones en cuanto a la maternidad adolescente y la falta de atención médica, lo que subraya la necesidad de intervenciones específicas para mejorar la salud maternoinfantil y prevenir embarazos en menores de edad.
+Adicionalmente, el acceso a servicios de salud materna adecuados resulta insuficiente en muchas de estas regiones. La información analizada muestra que una proporción significativa de partos en adolescentes ocurre **sin la presencia de personal médico capacitado**, ya sea en el hogar o en centros de salud con recursos limitados. Esto incrementa notablemente el riesgo de complicaciones obstétricas, nacimientos prematuros y bajo peso al nacer, afectando tanto la salud de la madre como la del recién nacido. La falta de asistencia también dificulta la detección temprana de problemas de salud y la aplicación de medidas preventivas.
+
+A esta situación se suma una serie de factores socioculturales como el **bajo nivel educativo**, la **falta de acceso a información sobre salud sexual y reproductiva**, la **normalización de la maternidad temprana** en algunos contextos comunitarios, y la **ausencia de programas de prevención efectivos** dirigidos a adolescentes, especialmente en zonas rurales e indígenas. Todo esto crea un entorno en el que la maternidad adolescente se convierte no solo en un resultado, sino en un ciclo difícil de romper.
+
+Esta realidad evidencia una **problemática compleja y multidimensional**, en la que convergen elementos culturales, económicos, educativos, legales y de salud pública. La alta prevalencia de maternidad adolescente en ciertos sectores de la población guatemalteca pone en riesgo los derechos fundamentales de las niñas y adolescentes, limita sus oportunidades de desarrollo y perpetúa condiciones de pobreza y exclusión.
+
+Por lo tanto, este análisis exploratorio no solo pone en evidencia un fenómeno preocupante, sino que también plantea la necesidad urgente de diseñar e implementar **estrategias intersectoriales, con enfoque territorial y pertinencia cultural**, que permitan **prevenir los embarazos en menores de edad**, promover el acceso universal a servicios de salud reproductiva de calidad, y garantizar que todas las adolescentes guatemaltecas puedan vivir una vida libre de violencia, con oportunidades reales de educación, autonomía y desarrollo.
 
 ### b.	Enuncien un problema científico y unos objetivos preliminares.
 
-¿Cómo influye la diferencia de edad entre los padres, el grupo étnico y el acceso a atención médica en la prevalencia del embarazo adolescente y en las condiciones de salud maternoinfantil en Guatemala?
+**🧪 Problema Científico**
 
-Objetivos Preliminares
-1.Analizar la relación entre la diferencia de edad en las parejas y la incidencia de embarazo adolescente, evaluando posibles patrones de desigualdad y riesgos asociados.
+**¿Cómo influyen la diferencia de edad entre los padres, la pertenencia a un grupo étnico específico y el acceso a atención médica en la prevalencia del embarazo adolescente y en las condiciones de salud maternoinfantil en Guatemala entre los años 2009 y 2022?**
 
-2.Identificar los grupos étnicos con mayor prevalencia de maternidad adolescente, explorando factores socioeconómicos y culturales que contribuyen a esta problemática.
+En Guatemala, el embarazo en adolescentes continúa siendo un desafío importante tanto para el sistema de salud como para el desarrollo social del país. Diversos estudios han evidenciado que este fenómeno está estrechamente vinculado con condiciones estructurales como la pobreza, la marginación étnica y la falta de acceso a servicios básicos, entre ellos la salud y la educación (Ministerio de Salud Pública y Asistencia Social [MSPAS], 2018). Además, se ha documentado que en las zonas rurales y de mayoría indígena, las tasas de embarazo adolescente son significativamente más altas en comparación con las zonas urbanas (UNICEF, 2021).
 
-3.Evaluar el acceso a atención médica durante el parto en madres adolescentes, determinando qué factores influyen en la falta de atención médica y sus consecuencias.
+Asimismo, la literatura especializada ha señalado que las diferencias de edad marcadas entre las madres adolescentes y sus parejas suelen estar asociadas con relaciones de poder asimétricas, las cuales limitan la capacidad de las jóvenes para ejercer sus derechos sexuales y reproductivos (Organización Panamericana de la Salud [OPS], 2020). Esto se traduce en decisiones no informadas o forzadas respecto al inicio de la vida sexual, el uso de métodos anticonceptivos y la aceptación del embarazo.
 
-4.Establecer la correlación entre la edad materna y el peso al nacer de los bebés, para entender los posibles efectos del embarazo adolescente en la salud neonatal.
+El acceso limitado a atención médica durante el embarazo y el parto también constituye un factor de riesgo que agrava la vulnerabilidad de este grupo poblacional. Las adolescentes embarazadas que no reciben atención adecuada tienen mayor probabilidad de sufrir complicaciones como partos prematuros, bebés con bajo peso al nacer e incluso mortalidad neonatal (World Health Organization [WHO], 2022).
 
-5.Proponer estrategias para reducir la incidencia del embarazo adolescente en los grupos más vulnerables, considerando intervenciones en educación, salud y apoyo comunitario.
+Frente a este panorama, es necesario profundizar en el análisis de datos disponibles para entender cómo interactúan estas variables y cómo afectan la prevalencia del embarazo adolescente, así como la calidad de vida de madres e hijos. Esto permitirá generar recomendaciones basadas en evidencia para la implementación de políticas públicas más eficaces.
+
+**🎯 Objetivos Preliminares**
+
+1. **Analizar la relación entre la diferencia de edad en las parejas y la incidencia de embarazo adolescente**, evaluando posibles patrones de desigualdad estructural y vulnerabilidad social que puedan estar presentes en uniones con brechas de edad significativas. Se busca entender si estas relaciones reflejan dinámicas de poder asimétrico que afecten negativamente la autonomía reproductiva de las adolescentes (OPS, 2020).
+
+2. **Identificar los grupos étnicos con mayor prevalencia de maternidad adolescente**, particularmente aquellos históricamente marginados, como los pueblos mayas y garífunas. Este objetivo pretende explorar las condiciones socioeconómicas, culturales y territoriales que contribuyen a esta problemática, reconociendo la necesidad de intervenciones con pertinencia cultural (UNICEF, 2021).
+
+3. **Evaluar el acceso a atención médica durante el parto en madres adolescentes**, determinando cuáles son los principales factores asociados con la falta de atención profesional, tales como ubicación geográfica, nivel educativo o tipo de institución de salud disponible. Asimismo, se examinarán las consecuencias potenciales sobre la salud materna y neonatal (MSPAS, 2018).
+
+4. **Establecer la correlación entre la edad materna y el peso al nacer de los recién nacidos**, con el fin de comprender si el embarazo adolescente está asociado a mayor riesgo de bajo peso al nacer, como lo sugieren estudios previos en contextos similares (WHO, 2022). Esta información será clave para el diseño de estrategias de prevención y atención diferenciada.
+
+5. **Proponer estrategias orientadas a reducir la incidencia del embarazo adolescente en los grupos más vulnerables**, fundamentadas en los hallazgos del análisis exploratorio. Estas estrategias podrían incluir programas educativos con enfoque en derechos sexuales y reproductivos, campañas de sensibilización, mejora del acceso a servicios de salud, y fortalecimiento del tejido comunitario en áreas rurales e indígenas (UNESCO, 2020).
+
+**📚 Referencias**
+
+- Ministerio de Salud Pública y Asistencia Social (MSPAS). (2018). *Situación del embarazo en adolescentes en Guatemala*. Gobierno de Guatemala.  
+- Organización Panamericana de la Salud (OPS). (2020). *Salud sexual y reproductiva en adolescentes: Un enfoque integral*. https://www.paho.org  
+- UNICEF. (2021). *Adolescent pregnancy in Latin America and the Caribbean: Trends and recommendations*. https://www.unicef.org  
+- World Health Organization (WHO). (2022). *Adolescent pregnancy: Key facts*. https://www.who.int  
+- UNESCO. (2020). *Educación integral en sexualidad: Guía para la formulación de políticas públicas*. https://unesdoc.unesco.org
+- Instituto Nacional de Estadística Guatemala. (2024). *Estadísticas Vitales*. Ine.gob.gt. https://www.ine.gob.gt/vitales/
 
 ### c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
 
