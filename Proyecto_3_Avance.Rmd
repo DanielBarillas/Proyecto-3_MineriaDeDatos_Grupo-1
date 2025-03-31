@@ -15,7 +15,7 @@ header-includes:
 repository: "https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git"
 ---
 
-## Enlace al Repositorio del proyecto 3 de minería de datos del Grupo #1
+## Enlace al Repositorio del proyecto 3 - Entrega 1 de minería de datos del Grupo #1
 [Repositorio en GitHub](https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1.git)
 
 ## 0. Descargar los conjuntos de datos.
@@ -1966,101 +1966,162 @@ Frente a este panorama, es necesario profundizar en el análisis de datos dispon
 
 ### c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
 
-## Descripción de los Datos y Proceso de Limpieza
-Para responder el problema planteado sobre la maternidad adolescente en Guatemala y su relación con factores como el grupo étnico, la diferencia de edad entre los padres y el acceso a atención médica, se trabajó con un conjunto de datos de nacimientos registrados entre 2009 y 2022.
+**Descripción de los Datos y Proceso de Limpieza**
 
-Al analizar el estado inicial de los datos, se identificaron varias inconsistencias, valores faltantes (NA) y variables redundantes que requerían limpieza y transformación antes de su uso en el análisis. A continuación, se describe el estado inicial del conjunto de datos y las operaciones de limpieza realizadas:
+Para responder al problema planteado —analizar la maternidad adolescente en Guatemala en relación con factores como el grupo étnico, la diferencia de edad entre padres, la escolaridad, el acceso a atención médica y las condiciones del parto— se utilizó un conjunto de datos de nacimientos proporcionado por el Instituto Nacional de Estadística (INE) que abarca un período de **14 años**, desde **2009 hasta 2022**, con más de **5.1 millones de registros únicos**.
 
-# Estado Inicial del Conjunto de Datos
-Presencia de valores faltantes (NA): Se encontraron muchas variables con valores ausentes, especialmente en información sobre el padre (grupo étnico, ocupación, municipio de nacimiento), la madre (grupo étnico, escolaridad), la ciudad de residencia, entre otras.
+**📦 Estado Inicial del Conjunto de Datos**
 
-- Datos redundantes: Se encontraron variables duplicadas o equivalentes, como dos formas de registrar el municipio de nacimiento del padre y de la madre, así como dos maneras de codificar el grupo étnico de la madre.
+Al consolidar los archivos anuales, se identificaron diversas **inconsistencias, valores ausentes y estructuras heterogéneas** entre los diferentes años, por lo que fue necesario realizar un proceso exhaustivo de limpieza y estandarización. Algunas características destacadas del estado inicial fueron:
 
-- Valores extremos: Se detectaron valores fuera de rango en variables como la edad de la madre, edad del padre, peso del bebé al nacer, entre otros.
+- **Variables faltantes y con alta proporción de NA**: Especialmente en información sobre los padres (grupo étnico, ocupación, municipio de nacimiento, lugar de residencia) y también sobre las madres (escolaridad, grupo étnico).
 
-# Operaciones de Limpieza Realizadas
-Conversión de Variables: Se aseguraron los tipos de datos correctos para cada variable, convirtiendo a formato numérico aquellas que debían ser tratadas como números (Edadp, Edadm, Libras, Onzas, Tohite, Tohinm, Tohivi) y categóricas aquellas que representan información cualitativa.
+- **Variables redundantes o duplicadas**: Por ejemplo, `Grupetma` y `PuebloPM` registran el mismo atributo (grupo étnico de la madre) pero con diferentes nombres y formatos según el año.
 
-# Filtrado de Rango:
+- **Diferencias en nombres de variables**: Entre años, una misma información se registraba con distintos nombres, dificultando la fusión directa de los archivos.
 
-Se filtraron los valores dentro de rangos lógicos para evitar errores o datos atípicos irreales.
+- **Presencia de valores extremos o fuera de rango**: Se detectaron madres de más de 100 años, padres de hasta 90 años, bebés con pesos imposibles (más de 20 libras), edades de matrimonio menores a los 13 años, y más de 20 hijos fallecidos en algunos casos.
 
-Se aseguraron valores adecuados para edades (madres de 10 a 100 años, padres de 10 a 90 años), peso de bebés (entre 1 y 10 libras con onzas entre 0 y 15), entre otros.
+- **Variables irrelevantes** para el análisis: Como `Archivo`, `Areag`, entre otras administrativas, sin valor analítico real.
 
-# Eliminación de Variables No Necesarias:
-Se eliminaron variables que no aportaban información relevante al análisis, como:
+**🛠️ Operaciones de Limpieza Realizada**s
 
-Areag: Área donde se registró el nacimiento.
+**📌 1. Estandarización y unificación de nombres de variables**
+Se establecieron nombres uniformes para variables equivalentes que variaban entre archivos. Esto incluyó homologar:
+- Grupo étnico (`PuebloPM`, `Grupetma`, `Gretnm`).
+- Nacionalidad (`Naciom`, `Naciop`).
+- Peso (`Libras`, `Onzas` → `Peso_Onzas`).
+- Edad (`Edadm`, `Edadp`).
 
-Archivo: Información administrativa sin relevancia analítica.
+**📌 2. Conversión de tipos de datos**
+Las variables fueron transformadas a tipos adecuados:
+- Números: Edad de madre/padre, número de hijos, peso, años.
+- Categóricas: Escolaridad, grupo étnico, tipo de parto, asistencia médica, estado civil, sexo del recién nacido.
 
-Grupetma: Codificación redundante del grupo étnico de la madre.
+**📌 3. Filtrado de valores válidos**
+Se establecieron **rangos lógicos de validación** para evitar errores por digitación o datos atípicos:
+- **Edad materna**: 10 a 100 años.
+- **Edad paterna**: 10 a 90 años.
+- **Peso al nacer**: 1 a 10 libras (y 0 a 15 onzas).
+- **Años de matrimonio**: coherentes con edad de la madre.
+- **Número de hijos fallecidos**: 0 a 20 máximo.
 
-Munpnam: Variable alternativa a otra con la misma información.
+Registros fuera de estos rangos fueron eliminados o corregidos si se detectaron errores evidentes.
 
-# Tratamiento de Valores Faltantes:
-Se aplicaron diferentes estrategias dependiendo de la variable:
+**📌 4. Eliminación de variables no necesarias**
+Variables como `Archivo`, `Areag`, `Munpnam`, `Grupetma`, entre otras, fueron removidas por no aportar valor analítico o ser redundantes con otras ya presentes.
 
-# Sustitución con otra variable equivalente: 
-Se reemplazaron valores ausentes en Añoocu con Añoreg, ya que el año de ocurrencia del nacimiento es igual al año de registro.
+**📌 5. Tratamiento de valores faltantes**
+Se aplicaron estrategias específicas según el tipo y relevancia de la variable:
 
-# Uso del valor más común: 
-Para Naciop y Naciom (nacionalidad del padre y la madre), se utilizó el valor más frecuente (Guatemala).
+- **Sustitución con otra variable equivalente**:  
+  - `Añoocu` fue reemplazado con `Añoreg` cuando faltaba.
 
-# Sustitución con "No especificado": 
-En variables como Gretnp (grupo étnico del padre), Ocupap, Ocupam, Mupnap (municipio de nacimiento del padre), Paisnacp, Paisrep, Paisnacm, Paisrem, Ciuopad, Ciuomad, entre otras.
+- **Uso del valor más común** (moda):  
+  - `Naciop`, `Naciom`: se imputó “Guatemala” al ser la nacionalidad predominante.
 
-# Asignación de una categoría general: 
-Para ViaPar (tipo de parto), se asignó el valor "Otro" cuando no había información, y en TipoIns (tipo de institución donde ocurrió el parto), se puso "No hubo" en casos donde no se reportó atención médica institucional.
+- **Relleno con “No especificado” o “Otro”**:  
+  - Usado en campos como grupo étnico del padre, ocupación, ciudad de nacimiento y tipo de parto cuando no se proporcionó información.
 
-# Reemplazo con otra variable relacionada: 
-Se reemplazaron los valores faltantes en PuebloPP (grupo étnico del padre) con Gretnp y los de PuebloPM (grupo étnico de la madre) con Gretnm.
+- **Sustitución con otra variable relacionada**:  
+  - `Gretnp` reemplazó a valores ausentes en `PuebloPP`.
+  - `Gretnm` sustituyó faltantes en `PuebloPM`.
 
-#Creación de Nueva Variable:
+**📌 6. Creación de nuevas variables derivadas**
+Para facilitar el análisis:
+- Se creó `Peso_Onzas` = (Libras × 16) + Onzas.
+- Se generaron variables binarias para embarazo adolescente (<20 años), asistencia profesional y tipo de institución.
 
-Se calculó el peso del bebé en onzas (Peso_Onzas) a partir de las variables Libras y Onzas para facilitar el análisis.
+**📌 7. Revisión final de limpieza**
+Se realizó un `summary()` general para revisar:
+- Que no quedaran NA en variables clave.
+- Que las distribuciones fueran coherentes.
+- Que el conjunto estuviera estructurado correctamente.
 
-# Verificación Final:
-Se realizó un resumen de los datos tras la limpieza para confirmar que no quedaban valores faltantes en variables clave y que los datos estaban estructurados correctamente para el análisis.
+También se verificaron distribuciones por medio de histogramas, boxplots y gráficas de densidad para confirmar la validez de los datos corregidos.
 
-# Estado Final del Conjunto de Datos
-Tras la limpieza, el dataset quedó estructurado de manera más clara, con menos valores ausentes y sin datos innecesarios o erróneos. Ahora, el conjunto de datos permite realizar un análisis más preciso sobre:
+✅ **Estado Final del Conjunto de Datos**
 
-La relación entre el grupo étnico y la incidencia del embarazo adolescente.
+Después del proceso de limpieza, los datos quedaron organizados de forma **estructurada, clara, sin duplicados ni inconsistencias**, y aptos para responder preguntas de investigación como:
 
-La diferencia de edad entre los padres y su posible relación con dinámicas de poder desiguales.
+- ¿Cuál es la incidencia del embarazo adolescente y cómo varía según grupo étnico, nivel educativo y estado civil?
+- ¿Qué relación existe entre la diferencia de edad entre los padres y el peso del bebé o condiciones del parto?
+- ¿Se asocian los partos de adolescentes con menor cobertura médica o institucional?
+- ¿Existen perfiles de riesgo específicos en cuanto a escolaridad, edad, zona geográfica o tipo de parto?
 
-La falta de acceso a atención médica en partos de adolescentes.
-
-La relación entre la edad materna y el peso del bebé al nacer.
-
-Este proceso de limpieza y estructuración de los datos permite un análisis más confiable, reduciendo el riesgo de sesgos y mejorando la calidad de los resultados que se obtendrán en el estudio
+Gracias a esta limpieza profunda, ahora es posible aplicar modelos de análisis más avanzados (como clustering, segmentación o regresiones) sin sesgos atribuibles a la calidad deficiente de los datos.
 
 ### d.	Escriban unas conclusiones con los hallazgos encontrados durante el análisis exploratorio. 
 
-## **Conclusiones del Análisis Exploratorio**
+**Conclusiones del Análisis Exploratorio de los Datos de Nacimientos en Guatemala (2009–2022)**
 
-Tras realizar un análisis exploratorio detallado del conjunto de datos de nacimientos en Guatemala entre 2009 y 2022, se identificaron varios patrones y tendencias relevantes en relación con la maternidad adolescente. A continuación, se resumen los principales hallazgos:
+A lo largo del proceso de análisis exploratorio de los datos de nacimientos proporcionados por el INE (Instituto Nacional de Estadística) de Guatemala, correspondientes a los años 2009 a 2022, se han identificado patrones demográficos, sociales, sanitarios y culturales que revelan una fotografía compleja de la situación de las madres, los nacimientos y las condiciones en que estos ocurren en el país. A continuación, se presentan las conclusiones basadas en el análisis detallado de más de 5 millones de registros.
 
-### **Calidad y Limpieza de los Datos**
-- Se encontraron varias inconsistencias en los datos, incluyendo valores atípicos, valores fuera de rango y un alto número de valores faltantes en algunas variables clave, especialmente en información relacionada con el padre.
-- Se realizó un proceso de imputación de datos faltantes, utilizando diferentes estrategias, como el reemplazo con valores más comunes, la imputación basada en variables equivalentes y la asignación de la categoría *"No especificado"* para evitar la eliminación de registros valiosos.
-- La limpieza de datos permitió mejorar la estructura del dataset, eliminando redundancias y facilitando su posterior análisis.
+1. **Cantidad y cobertura de datos**
+Se consolidaron un total de **5,195,195 registros de nacimientos**, con un promedio de 371,085 nacimientos por año, lo que proporciona una base estadísticamente robusta. Los datos incluyen tanto variables sociodemográficas como biomédicas, permitiendo un análisis transversal y longitudinal. Si bien se observan algunas diferencias en las variables disponibles por año (de 37 a 42 por archivo), la mayoría de las variables esenciales están presentes de forma consistente.
 
-### **Características de la Maternidad Adolescente**
-- Se confirmó la presencia de casos de maternidad en edades tempranas, con madres adolescentes desde los 10 años.
-- Se observó una mayor frecuencia de nacimientos en madres jóvenes en ciertos grupos étnicos, lo que podría sugerir diferencias culturales o socioeconómicas en el acceso a educación y planificación familiar.
-- La escolaridad de las madres y padres mostró una tendencia baja en varios casos, lo que podría estar relacionado con la edad temprana en que ocurre el embarazo.
+Esta consistencia permitió la integración de los archivos y la realización de comparaciones significativas a lo largo del tiempo, además de facilitar la elaboración de gráficas y tablas para la exploración inicial de la base de datos.
 
-### **Información del Padre**
-- Se identificó un alto porcentaje de registros con información ausente sobre el padre, especialmente en variables como ocupación, municipio de nacimiento y grupo étnico.
-- En los casos donde se cuenta con datos, se observó una brecha de edad significativa entre la madre y el padre en algunos registros, lo que podría indicar patrones de unión con hombres de mayor edad.
+2. **Edad de las madres y padres**
+El análisis reveló que la **edad promedio de las madres** al momento del parto es de **25.8 años**, mientras que la de los padres es de **29.5 años**. Esto implica una diferencia promedio de 3.7 años, pero en algunos casos, la diferencia es mucho más pronunciada: se identificaron registros con padres de **hasta 90 años** y madres de **tan solo 10 años**, lo cual refleja tanto la diversidad como los extremos sociales que coexisten en el país.
 
-### **Atención Médica y Condiciones del Parto**
-- Un porcentaje significativo de partos no se realizó en instituciones de salud, lo que podría reflejar barreras en el acceso a servicios médicos.
-- Se detectó variabilidad en el peso al nacer de los bebés, con algunos casos de bajo peso que podrían estar asociados con condiciones de salud materna o falta de atención médica prenatal adecuada.
+Este hallazgo sugiere una necesidad de políticas orientadas a la educación reproductiva, especialmente en áreas rurales donde la diferencia de edad puede representar relaciones desiguales de poder que ponen en riesgo el bienestar de las madres jóvenes.
 
-### **Consideraciones Finales**
-El análisis exploratorio de estos datos brinda una visión preliminar sobre la maternidad adolescente en Guatemala, destacando factores como la falta de información del padre, las disparidades en acceso a atención médica y la relación entre grupo étnico y edad materna. Estos hallazgos pueden servir como base para estudios más profundos y el diseño de políticas públicas enfocadas en la educación, la prevención del embarazo adolescente y la mejora del acceso a servicios de salud materno-infantil.
+3. **Embarazos en adolescentes**
+Uno de los hallazgos más preocupantes es la persistencia del **embarazo en adolescentes**, que continúa afectando a una parte considerable de la población, especialmente en departamentos como **Huehuetenango, Jalapa y San Marcos**. Aunque hay una ligera disminución en los años más recientes, se observan embarazos en niñas **de 10 a 14 años**, lo que representa una situación de alta vulnerabilidad que puede estar relacionada con **uniones tempranas, abuso sexual o prácticas culturales normalizadas**.
 
+El caso de una madre **casada a los 13 años** evidencia la necesidad urgente de reforzar mecanismos de protección a menores, y de sensibilizar a las comunidades sobre los derechos de las niñas y adolescentes.
 
+4. **Escolaridad y estado civil**
+El nivel educativo es un factor determinante en las condiciones del embarazo y parto. Se observó que **muchas madres adolescentes no poseen ningún nivel de escolaridad formal**, o apenas alcanzan la educación primaria. En particular:
+- Entre las madres unidas, más del **68% no tienen escolaridad**.
+- Entre las madres solteras y casadas, el porcentaje sin escolaridad se mantiene alto (cerca del **39%**).
+
+Además, el **estado civil predominante** es el de **soltera**, seguido por **casada** y **unida**. Esto puede estar vinculado a patrones culturales y religiosos que influyen en la toma de decisiones reproductivas. Se observa una tendencia a la unión libre en sectores con menor escolaridad y menor acceso a servicios institucionales.
+
+5. **Peso al nacer**
+El **peso promedio de los recién nacidos** es de **6.75 lb**, sin embargo, la distribución del peso **no sigue una distribución normal**, según el test de Shapiro-Wilk (p < 0.05), lo que implica que no puede asumirse una dispersión simétrica en torno a la media. Este hallazgo es relevante porque muchas decisiones médicas, intervenciones y clasificaciones dependen de distribuciones normales.
+
+Además:
+- Se identificaron **diferencias por sexo**: los **niños varones** pesan más que las niñas.
+- Las **madres adolescentes y mayores de 40 años** tienden a tener bebés con menor peso, lo que sugiere factores de riesgo en extremos de edad.
+- Se observó que el **tipo de asistencia médica** también influye: nacimientos atendidos por médicos tienden a tener mejor control prenatal y por tanto, pesos más adecuados al nacer.
+
+6. **Tipo de atención médica y lugar del parto**
+A pesar de avances en cobertura médica, todavía hay **una alta proporción de partos asistidos por parteras tradicionales** o realizados fuera de hospitales. Específicamente:
+- Solo **54% de los partos fueron atendidos por médicos**.
+- El restante fue atendido por **enfermeras, comadronas o sin asistencia profesional**.
+- El **lugar del parto** en muchos casos no fue un hospital, sino un **centro de salud o incluso domicilios**, lo cual es preocupante, ya que se asocia con mayores riesgos tanto para la madre como para el recién nacido.
+
+Este patrón refleja desigualdades territoriales en el acceso a servicios de salud, y una confianza cultural arraigada en los saberes tradicionales, que si bien son valiosos, necesitan ser complementados con atención obstétrica moderna.
+
+7. **Tipo de parto**
+Los datos muestran que **el 98% de los partos fueron vaginales**, mientras que solo **1.17% fueron cesáreas**. Esta tasa de cesáreas es extremadamente baja en comparación con otros países y puede ser indicativa de:
+- Limitaciones en el acceso a servicios quirúrgicos.
+- Falta de diagnóstico de embarazos de alto riesgo.
+- O bien una preferencia cultural por partos naturales.
+
+La baja tasa de cesáreas podría traducirse en complicaciones no atendidas, o bien en subregistros administrativos en las bases de datos del sistema de salud.
+
+8. **Mortalidad infantil y número de hijos**
+En promedio, las madres han tenido **2.7 hijos**, de los cuales **2.5 están vivos** y **0.18 han fallecido**. Aunque el número de hijos fallecidos parece bajo, es relevante considerar que representa una **mortalidad infantil acumulada del 6.7%**, lo cual es elevado en comparación con estándares internacionales.
+
+Algunos registros extremos indican hasta **20 hijos fallecidos por una misma madre**, lo cual podría deberse a:
+- Errores de digitación,
+- Problemas de salud estructurales,
+- Falta de acceso a atención prenatal,
+- Pérdida recurrente por desnutrición o enfermedades prevenibles.
+
+9. **Cruces de variables e interacciones clave**
+El análisis de interacciones entre variables permitió identificar perfiles de **alta vulnerabilidad**:
+- **Madres adolescentes sin escolaridad** y con múltiples hijos.
+- **Partos fuera de hospitales y sin asistencia médica profesional**.
+- **Zonas rurales o indígenas**, donde el acceso a servicios es limitado.
+- **Niños con bajo peso al nacer** relacionados con edad materna, falta de control prenatal y nivel educativo.
+
+Estas combinaciones generan un perfil de riesgo estructural que afecta tanto a las madres como a los recién nacidos, perpetuando ciclos de pobreza y desnutrición.
+
+🧠 **Síntesis reflexiva final**
+El análisis exploratorio ha permitido visualizar una **realidad compleja y multifactorial** sobre los nacimientos en Guatemala. Existen profundas **desigualdades en el acceso a salud, educación y planificación familiar**, que se reflejan en los datos recolectados.
+
+En especial, el **embarazo en adolescentes, la baja escolaridad, la alta mortalidad infantil, el bajo peso al nacer y la falta de atención médica profesional** son signos de una estructura que requiere intervención urgente. Estos hallazgos no solo reflejan datos aislados, sino **patrones sistémicos** que deben ser abordados con políticas públicas intersectoriales, campañas educativas, empoderamiento comunitario y fortalecimiento del sistema de salud materno-infantil.
