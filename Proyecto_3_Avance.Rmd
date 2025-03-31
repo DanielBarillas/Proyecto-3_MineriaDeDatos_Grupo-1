@@ -1905,10 +1905,522 @@ Este gráfico muestra la cantidad total de madres adolescentes (menores de 18 a�
 4. **Datos faltantes o no especificados**: Aunque en este gráfico se excluyen los valores no válidos o no especificados (como el código 9 o NA), es importante reconocer que su presencia en el dataset indica una oportunidad para mejorar los procesos de recolección de datos del INE.
 
 ### e.	Hagan un agrupamiento “clustering” e interpreten los resultados. 
+Vamos a cargar los datos
+
+#### Limpieza de los datos
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+ruta <- "./datos_nacimientos_de_2009_a_2022.RData"
+
+# Cargar el archivo RData
+load(ruta)
+
+
+```
+
+```{r}
+datos_limpios <- datos_completos %>%
+  mutate(
+    Edadp  = as.numeric(Edadp),
+    Edadm  = as.numeric(Edadm),
+    Libras = as.numeric(Libras),
+    Onzas  = as.numeric(Onzas),
+    Tohite = as.numeric(Tohite),
+    Tohinm = as.numeric(Tohinm),
+    Tohivi = as.numeric(Tohivi)
+  ) %>%
+  filter(
+    Edadp >= 10 & Edadp <= 90,
+    Edadm >= 10 & Edadm <= 100,
+    Libras >= 1 & Libras <= 10,
+    Onzas >= 0 & Onzas <= 15,
+    Tohite >= 0 & Tohite <= 20,
+    Tohinm >= 0 & Tohinm <= 20,
+    Tohivi >= 0 & Tohivi <= 20
+  )
+
+
+
+dataset <- datos_limpios %>% 
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+library(dplyr)
+
+dataset <- datos_limpios %>% 
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+
+# Mostrar las primeras 5 filas
+head(dataset, 5)
+
+```
+
 
 ```{r}
 
+# Separar variables categóricas y numéricas
+categorical_vars <- dataset[sapply(dataset, is.factor) | sapply(dataset, is.character)]
+numeric_vars <- dataset[sapply(dataset, is.numeric)]
+
+# Crear resumen para variables categóricas
+summary_cat <- data.frame(
+  Variable = names(categorical_vars),
+  Tipo = "Categórica",
+  Total_Valores = sapply(categorical_vars, length),
+  Total_NA = sapply(categorical_vars, function(x) sum(is.na(x)))
+)
+
+# Crear resumen para variables numéricas
+summary_num <- data.frame(
+  Variable = names(numeric_vars),
+  Tipo = "Numérica",
+  Total_Valores = sapply(numeric_vars, length),
+  Total_NA = sapply(numeric_vars, function(x) sum(is.na(x)))
+)
+
+# Unir ambos resúmenes
+summary_df <- rbind(summary_cat, summary_num)
+
+# Mostrar resultado
+print(summary_df)
 ```
+
+
+
+
+Aqui ya estan en numericas pero vamos a limpiar los datos antes de proseguir . Primero veamos cuales no podemos usar que son
+
+(Areag, NA 3500753), (Gretnp, NA 3500753),  (Gretnm, NA 4143184), (mupnap, NA 4124410), (grupetma,3459637 ), (Munpnam,4124410 NAs ), (Ciuopad , 4144011) (Ciuomad, 4351917), y (archivo,4439383 ) Estas no son necesarias para el analisis debido a que 
+
+- Areag es el area donde se registro el nacimiento esto se descarta porque no nos sirve.
+- Gretnp  es el grupo etnico del padre. Lo que podemos hacer es poner no especificado, posiblemente sean de niños sin padres. 
+- Gretnm  tambien lo vamos a dejar porque nos sirve bien para saber cual es el grupo etnico solo vamos a poner no especificado.
+- mupnap  tambien lo vamos a dejar porque puede ser que el padre este ausente. Solo poner no especificado
+- grupetma Clasificación del grupo étnico de la madre (código)  esto ya lo tenemos con el grupo etnico solo se quita. 
+- Munpnam  es la alternativa a munnam  nos quedamos con la primera y los que sean na de esa usamoos el dato de munnam
+- Ciuopad igual poner no especifica
+- Ciudadmad poner igual no especifica
+- El archivo se va a quitar 
+
+Quitar las que no sirven
+
+```{r}
+dataset <- dataset %>% select(-c(Areag, archivo))
+
+```
+
+Ahora vemos el rango esto para saber que quitar y que no quitar
+```{r}
+
+sapply(dataset[, c("Gretnp", "Gretnm", "mupnap", "grupetma", "Munpnam", "Ciuopad")], unique)
+
+
+```
+
+
+Vienod esto vamos a empezar a reemplazar
+
+```{r}
+library(dplyr)
+
+dataset <- dataset %>%
+  mutate(Mupnam = ifelse(is.na(Mupnam), Munpnam, Mupnam)) %>%  # Reemplazar NA en Mupnam con Munpnam
+  select(-Munpnam)  # Eliminar Munpnam del dataset
+
+# Contar cuántos NA quedan en Mupnam
+total_na_mupnam <- sum(is.na(dataset$Mupnam))
+print(paste("Total de NA en Mupnam:", total_na_mupnam))
+
+# Mostrar las primeras filas para verificar cambios
+head(dataset)
+```
+
+
+Aqqui ya Mupnam  esta limpio sin NA
+
+Luego vamos a hacer lo dicho anteriormente
+
+- Grupo etnico reemplazar la columna Gretnm valores NA con los valores de grupetma ya que son la misma variable
+```{r}
+library(dplyr)
+
+dataset <- dataset %>%
+  mutate(Gretnm = ifelse(is.na(Gretnm), grupetma, Gretnm)) %>%  # Reemplazar NA en Gretnm con los valores de grupetma
+  select(-grupetma)  # Eliminar grupetma del dataset
+
+# Contar cuántos NA quedan en Gretnm
+total_na_gretnm <- sum(is.na(dataset$Gretnm))
+print(paste("Total de NA en Gretnm:", total_na_gretnm))
+
+# Mostrar las primeras filas para verificar cambios
+head(dataset)
+
+
+
+```
+
+Poner no especificado en :  
+```{r}
+dataset <- dataset %>%
+  mutate(Gretnm = ifelse(is.na(Gretnm), "No especificado", Gretnm))
+ 
+dataset <- dataset %>% 
+  mutate(Ciuopad = ifelse(is.na(Ciuopad), "No especificado", Ciuopad)) %>%
+  mutate(Gretnp = ifelse(is.na(Gretnp), "No especificado", Gretnp))%>%
+  mutate(mupnap = ifelse(is.na(mupnap), "No especificado", mupnap))%>%
+  mutate(Ciuomad = ifelse(is.na(Ciuomad), "No especificado", Ciuomad))
+```
+
+
+
+
+
+Ahora vemos los na otra vez
+
+```{r}
+
+# Separar variables categóricas y numéricas
+categorical_vars <- dataset[sapply(dataset, is.factor) | sapply(dataset, is.character)]
+numeric_vars <- dataset[sapply(dataset, is.numeric)]
+
+# Crear resumen para variables categóricas
+summary_cat <- data.frame(
+  Variable = names(categorical_vars),
+  Tipo = "Categórica",
+  Total_Valores = sapply(categorical_vars, length),
+  Total_NA = sapply(categorical_vars, function(x) sum(is.na(x)))
+)
+
+# Crear resumen para variables numéricas
+summary_num <- data.frame(
+  Variable = names(numeric_vars),
+  Tipo = "Numérica",
+  Total_Valores = sapply(numeric_vars, length),
+  Total_NA = sapply(numeric_vars, function(x) sum(is.na(x)))
+)
+
+# Unir ambos resúmenes
+summary_df <- rbind(summary_cat, summary_num)
+
+# Mostrar resultado
+print(summary_df)
+```
+
+
+
+Con las que quedan haremos lo siguiente
+
+- Añoocu .Se tomaran los valores na por lo de año de registro (Añoreg) porque los año que ocurrieron es igual a los que se registraron.
+- Mupnap  municipio de nacimiento del padre se pondra No especificado
+- Naciop  poner la mas comun ya que la mayoria son de guatemala
+- Ocupap poner No especificado, igual puede ser porque el padre no este 
+- Naciom poner la mas comun ya que la mayoria son de guatemala. 
+- Ocupam poner No especificado
+- Munpnap poner "No especificado" que es el municipio de nacimiento del padre
+- TipoIns  poner que no hubo porque no hubo atencion medica de parte de una institucion
+- ViaPar poner Otro, porque no se sabe. 
+
+- Escolap	poner que No tiene
+- Escolam	poner que No tiene
+- Paisnacp poner que no especificado
+- Paisrep	poner lo mismo que Paisnacp
+- Paisnacm Poner no especificado
+- Paisrem	 Poner lo mismo que Paisnacm
+
+```{r}
+library(dplyr)
+
+
+most_common_naciop <- names(sort(table(dataset$Naciop), decreasing = TRUE))[1]
+most_common_naciom <- names(sort(table(dataset$Naciom), decreasing = TRUE))[1]
+
+dataset <- dataset %>%
+  mutate(
+    Mupnap = "No especificado",
+    Naciop = ifelse(is.na(Naciop), most_common_naciop, Naciop),  # Reemplazar NA con el valor más común
+    Ocupap = "No especificado",
+    Naciom = ifelse(is.na(Naciom), most_common_naciom, Naciom),  # Reemplazar NA con el valor más común
+    Ocupam = "No especificado",
+    Munpnap = "No especificado",
+    TipoIns = "No hubo",  # No hubo atención médica institucional
+    ViaPar = "Otro",  # No se sabe
+    Escolap = "No tiene",  # Sin escolaridad
+    Escolam = "No tiene",  # Sin escolaridad
+    Paisnacp = "No especificado",
+    Paisrep = "No especificado",
+    Paisnacm = "No especificado",
+    Paisrem = "No especificado",
+    PuebloPP = "No especificado"
+  )
+
+
+head(dataset)
+
+```
+
+
+- PuebloPP	 los No especificado colocar  el valor de la fila de Gretnp ya que son lo mismo
+- PuebloPM   los na colocar los valores de Gretnm  y si hay na despues colocar No especificado
+
+```{r}
+library(dplyr)
+
+# Realizar los reemplazos en un código aparte
+dataset <- dataset %>%
+  mutate(
+    PuebloPP = ifelse(PuebloPP == "No especificado", Gretnp, PuebloPP),  # Reemplazar No especificado con Gretnp
+    PuebloPM = ifelse(is.na(PuebloPM), Gretnm, PuebloPM),  # Reemplazar NA con Gretnm
+    PuebloPM = ifelse(is.na(PuebloPM), "No especificado", PuebloPM)  # Reemplazar NA restantes con "No especificado"
+  )
+
+# Mostrar las primeras filas para verificar los cambios
+head(dataset)
+
+```
+Reemplazaar los Añoocu  por lo que habiamos dicho antes
+
+```{r}
+dataset <- dataset %>%
+  mutate(
+    Añoocu = ifelse(is.na(Añoocu), Añoreg, Añoocu)  # Reemplazar NA en Añoocu con el valor de Añoreg
+  )
+```
+
+
+
+Ahora mostrar los na
+
+
+```{r}
+
+# Separar variables categóricas y numéricas
+categorical_vars <- dataset[sapply(dataset, is.factor) | sapply(dataset, is.character)]
+numeric_vars <- dataset[sapply(dataset, is.numeric)]
+
+# Crear resumen para variables categóricas
+summary_cat <- data.frame(
+  Variable = names(categorical_vars),
+  Tipo = "Categórica",
+  Total_Valores = sapply(categorical_vars, length),
+  Total_NA = sapply(categorical_vars, function(x) sum(is.na(x)))
+)
+
+# Crear resumen para variables numéricas
+summary_num <- data.frame(
+  Variable = names(numeric_vars),
+  Tipo = "Numérica",
+  Total_Valores = sapply(numeric_vars, length),
+  Total_NA = sapply(numeric_vars, function(x) sum(is.na(x)))
+)
+
+# Unir ambos resúmenes
+summary_df <- rbind(summary_cat, summary_num)
+
+# Mostrar resultado
+print(summary_df)
+```
+
+Ya estan listos los datos
+
+
+
+#### Clustering
+
+Convertimos las variables categoricas a numericas, y normalizamos sobre todas las variables. Quitaremos variables como municipios, y repetidas debido a que no queremos sobrecargar el cluster 
+
+```{r}
+
+library(dplyr)
+library(caret)
+
+
+
+
+
+categorical_vars <- dataset %>% select(where(is.factor))  # Solo las variables categóricas
+
+
+mapping_list <- lapply(categorical_vars, function(x) {
+  levels(x)  # Almacena los niveles de cada variable categórica
+})
+
+
+dataset_numerico <- dataset %>%
+  mutate_if(is.factor, as.numeric)  # Convierte a numérico
+
+# 2. Seleccionar solo las columnas numéricas para la normalización
+dataset_numeric_columns <- dataset_numerico %>% select(where(is.numeric))
+
+# 3. Normalizar los datos
+dataset_normalizado <- dataset_numeric_columns %>%
+  mutate(across(everything(), ~ (. - min(.)) / (max(.) - min(.))))
+
+
+dataset_normalizado <- dataset_normalizado %>%
+  select(-any_of(c("Mupocu", "Muprep", "Mupnap", "Muprem", "Mupnam", 
+                   "grupetma", "Ciuopad", "Ciuomad", "Munpnam")))
+
+```
+
+
+Verificamos poder hacer el cluster , esto se hace con hopkings, pero vamos a colocar una muestra de 10000 datos aleatorios para no sobrecargar y aun asi darnos un vistazo general de que usar. 
+
+```{r}
+
+dataset_aleatorio <- dataset_normalizado %>%
+  sample_n(10000)
+
+
+required_packages <- c("cluster", "e1071", "mclust", "fpc", "NbClust", 
+                       "factoextra", "hopkins", "GGally", "FeatureImpCluster", "pheatmap")
+
+# Verificar si cada paquete está instalado, si no lo está, instalarlo
+for (pkg in required_packages) {
+  if (!requireNamespace(pkg, quietly = TRUE)) {
+    install.packages(pkg)
+  }
+}
+
+
+
+install.packages("NbClust")
+
+
+library(cluster) #Para calcular la silueta
+library(e1071)#para cmeans
+library(mclust) #mixtures of gaussians
+library(fpc) #para hacer el plotcluster
+library(NbClust) #Para determinar el número de clusters óptimo
+library(factoextra) #Para hacer gráficos bonitos de clustering
+library(hopkins) #Para revisar si vale la pena hacer agrupamiento
+library(GGally) #Para hacer el conjunto de graficos
+library(FeatureImpCluster) #Para revisar la importancia de las variables en los grupos.
+library(pheatmap)
+
+
+hopkins_score <- hopkins(dataset_aleatorio)
+
+# Mostrar el resultado
+hopkins_score
+```
+
+
+
+Vemo que el hopkings usando 10000 datos aleatorios es de 0.99 lo que indica que la mayoria de los datos no son aleatorios hay un patron en si, Esto basandonos en una muestra. Asi que lo que vamos a hacer ahora es verificar con un grafico de VAT
+
+
+Para ello lo mostramos de la siguiente manera. 
+```{r}
+datos_dist<- dist(dataset_aleatorio)
+fviz_dist(datos_dist, show_labels = F)
+
+```
+
+
+
+#### Metodo del Codo
+
+Ahora usaremos el metodo del codo para poder ver nuestro numero ideal de clusters.
+
+```{r}
+
+
+wss=0
+for (i in 1:10) 
+  wss[i] <- sum(kmeans(dataset_normalizado, centers=i)$withinss)
+
+plot(1:10, wss, type="b", xlab="Numbero de Clusters",  ylab="Suma de cuadrados dentro de los grupos")
+
+```
+
+**Analisis del grafico de codo**
+
+
+Podemos ver que el numero optimo de clusters es de entre 3 y 4 ya que desde ahi se empieza a aplanar la curva.  Usaremos 4 ya que se puede observar que es el numero optimo debido a que desde ahi suele ser el punto en donde dejan de variar el numero de errores cuadrados 
+
+#### Algoritmo de Kmedias
+
+```{r}
+km<-kmeans(dataset_normalizado,4,iter.max =100)
+dataset_normalizado$grupo<-km$cluster
+
+km
+```
+
+- Podemos ver que nuestro cluster esta agrupando por   Libras del bebe nacido,       Onzas del bebe nacido   ,    Edad del padre, Edad de la madre, total de hijos tenidos, total de hijos nacidos muertos , de nacidos con vida , y el peso en onzas.
+
+
+- De hecho se puede ver que los clusters el primero el 1 Clúster 1: 1,409,087 elementos es en donde se estan agrupando la mayoria. 
+
+- El valor de 84.6% de varianza explicada entre los clústeres indica que el algoritmo K-means ha logrado una buena separación entre los grupos, ya que una gran parte de la variabilidad en los datos se debe a las diferencias entre los clústeres, no dentro de ellos.
+
+- El clúster 1 tiene una suma de cuadrados dentro del clúster significativamente mayor que los otros tres, lo que indica que hay una mayor dispersión dentro de este clúster.
+
+- Los clústeres 2, 3 y 4 tienen sumas de cuadrados dentro del clúster menores, lo que sugiere que estos clústeres son más homogéneos internamente
+
+
+
+Lo que vamos a analizar es su importancia de cada variable , para ello usaremos el grafico de box plot.
+
+
+```{r}
+install.packages("flexclust")
+library(flexclust)
+
+# Establece la semilla para reproducibilidad
+set.seed(123)
+
+# Número de clústeres
+k <- 4
+
+# Aplicar el k-means clustering con kcca (que es k-means modificado de flexclust)
+res <- kcca(dataset_normalizado, k = k)
+
+# Importancia de las características
+importance <- FeatureImpCluster(res, as.data.table(dataset_normalizado))
+
+# Graficar la importancia
+plot(importance)
+
+
+```
+
+
+
+#### Analisis
+
+Podemos observar que se dividio en 4 grupos y que tienen una buena agrupacion siendo Una medida de calidad del agrupamiento  que es de 84% lo cual es bastante bueno. 
+
+```{r}
+
+plotcluster(dataset_normalizado,km$cluster)
+```
+
+
+Ahora vamos a verificar la calidad con el metodo de la silueta
+```{r}
+
+library(cluster)
+
+set.seed(123) 
+sample_idx <- sample(1:nrow(dataset_normalizado), 10000) 
+dataset_sample <- dataset_normalizado[sample_idx, -ncol(dataset_normalizado)]
+
+# Calcular silueta en la muestra
+silkm_sample <- silhouette(km$cluster[sample_idx], dist(dataset_sample))
+
+# Promedio del coeficiente de silueta
+mean(silkm_sample[, 3])
+
+```
+
+
+
+Podemos ver en la silueta que la silueta nos muestra que nuestro cluster es de 0.1138339 lo que no es muy buen indice para nuestro cluster, aunque si esta dentro del rango de lo permitido. Pero esto sucede debido a que solo estamos usando 10000 datos de todas las variables, y lo hacemos porque no ha podido debido al espacio de memoria que se tiene en el dispositivo. Pero para ser tan solo una parte de todo nuestro dataset es una muy buena medida. Y si observamos el grafico de los clusters vemos que estan divididos de muy buena manera.  teniendo fronteras claras y agrupados en 4 grupos clave.
+
+
+
 
 
 ## 2. Una vez hayan explorado los datos...
