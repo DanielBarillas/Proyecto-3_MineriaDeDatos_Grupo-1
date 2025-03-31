@@ -1808,13 +1808,101 @@ Objetivos Preliminares
 
 ### c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
 
-```{r}
+## Descripción de los Datos y Proceso de Limpieza
+Para responder el problema planteado sobre la maternidad adolescente en Guatemala y su relación con factores como el grupo étnico, la diferencia de edad entre los padres y el acceso a atención médica, se trabajó con un conjunto de datos de nacimientos registrados entre 2009 y 2022.
 
-```
+Al analizar el estado inicial de los datos, se identificaron varias inconsistencias, valores faltantes (NA) y variables redundantes que requerían limpieza y transformación antes de su uso en el análisis. A continuación, se describe el estado inicial del conjunto de datos y las operaciones de limpieza realizadas:
+
+# Estado Inicial del Conjunto de Datos
+Presencia de valores faltantes (NA): Se encontraron muchas variables con valores ausentes, especialmente en información sobre el padre (grupo étnico, ocupación, municipio de nacimiento), la madre (grupo étnico, escolaridad), la ciudad de residencia, entre otras.
+
+- Datos redundantes: Se encontraron variables duplicadas o equivalentes, como dos formas de registrar el municipio de nacimiento del padre y de la madre, así como dos maneras de codificar el grupo étnico de la madre.
+
+- Valores extremos: Se detectaron valores fuera de rango en variables como la edad de la madre, edad del padre, peso del bebé al nacer, entre otros.
+
+# Operaciones de Limpieza Realizadas
+Conversión de Variables: Se aseguraron los tipos de datos correctos para cada variable, convirtiendo a formato numérico aquellas que debían ser tratadas como números (Edadp, Edadm, Libras, Onzas, Tohite, Tohinm, Tohivi) y categóricas aquellas que representan información cualitativa.
+
+# Filtrado de Rango:
+
+Se filtraron los valores dentro de rangos lógicos para evitar errores o datos atípicos irreales.
+
+Se aseguraron valores adecuados para edades (madres de 10 a 100 años, padres de 10 a 90 años), peso de bebés (entre 1 y 10 libras con onzas entre 0 y 15), entre otros.
+
+# Eliminación de Variables No Necesarias:
+Se eliminaron variables que no aportaban información relevante al análisis, como:
+
+Areag: Área donde se registró el nacimiento.
+
+Archivo: Información administrativa sin relevancia analítica.
+
+Grupetma: Codificación redundante del grupo étnico de la madre.
+
+Munpnam: Variable alternativa a otra con la misma información.
+
+# Tratamiento de Valores Faltantes:
+Se aplicaron diferentes estrategias dependiendo de la variable:
+
+# Sustitución con otra variable equivalente: 
+Se reemplazaron valores ausentes en Añoocu con Añoreg, ya que el año de ocurrencia del nacimiento es igual al año de registro.
+
+# Uso del valor más común: 
+Para Naciop y Naciom (nacionalidad del padre y la madre), se utilizó el valor más frecuente (Guatemala).
+
+# Sustitución con "No especificado": 
+En variables como Gretnp (grupo étnico del padre), Ocupap, Ocupam, Mupnap (municipio de nacimiento del padre), Paisnacp, Paisrep, Paisnacm, Paisrem, Ciuopad, Ciuomad, entre otras.
+
+# Asignación de una categoría general: 
+Para ViaPar (tipo de parto), se asignó el valor "Otro" cuando no había información, y en TipoIns (tipo de institución donde ocurrió el parto), se puso "No hubo" en casos donde no se reportó atención médica institucional.
+
+# Reemplazo con otra variable relacionada: 
+Se reemplazaron los valores faltantes en PuebloPP (grupo étnico del padre) con Gretnp y los de PuebloPM (grupo étnico de la madre) con Gretnm.
+
+#Creación de Nueva Variable:
+
+Se calculó el peso del bebé en onzas (Peso_Onzas) a partir de las variables Libras y Onzas para facilitar el análisis.
+
+# Verificación Final:
+Se realizó un resumen de los datos tras la limpieza para confirmar que no quedaban valores faltantes en variables clave y que los datos estaban estructurados correctamente para el análisis.
+
+# Estado Final del Conjunto de Datos
+Tras la limpieza, el dataset quedó estructurado de manera más clara, con menos valores ausentes y sin datos innecesarios o erróneos. Ahora, el conjunto de datos permite realizar un análisis más preciso sobre:
+
+La relación entre el grupo étnico y la incidencia del embarazo adolescente.
+
+La diferencia de edad entre los padres y su posible relación con dinámicas de poder desiguales.
+
+La falta de acceso a atención médica en partos de adolescentes.
+
+La relación entre la edad materna y el peso del bebé al nacer.
+
+Este proceso de limpieza y estructuración de los datos permite un análisis más confiable, reduciendo el riesgo de sesgos y mejorando la calidad de los resultados que se obtendrán en el estudio
 
 ### d.	Escriban unas conclusiones con los hallazgos encontrados durante el análisis exploratorio. 
 
-```{r}
+## **Conclusiones del Análisis Exploratorio**
 
-```
+Tras realizar un análisis exploratorio detallado del conjunto de datos de nacimientos en Guatemala entre 2009 y 2022, se identificaron varios patrones y tendencias relevantes en relación con la maternidad adolescente. A continuación, se resumen los principales hallazgos:
+
+### **Calidad y Limpieza de los Datos**
+- Se encontraron varias inconsistencias en los datos, incluyendo valores atípicos, valores fuera de rango y un alto número de valores faltantes en algunas variables clave, especialmente en información relacionada con el padre.
+- Se realizó un proceso de imputación de datos faltantes, utilizando diferentes estrategias, como el reemplazo con valores más comunes, la imputación basada en variables equivalentes y la asignación de la categoría *"No especificado"* para evitar la eliminación de registros valiosos.
+- La limpieza de datos permitió mejorar la estructura del dataset, eliminando redundancias y facilitando su posterior análisis.
+
+### **Características de la Maternidad Adolescente**
+- Se confirmó la presencia de casos de maternidad en edades tempranas, con madres adolescentes desde los 10 años.
+- Se observó una mayor frecuencia de nacimientos en madres jóvenes en ciertos grupos étnicos, lo que podría sugerir diferencias culturales o socioeconómicas en el acceso a educación y planificación familiar.
+- La escolaridad de las madres y padres mostró una tendencia baja en varios casos, lo que podría estar relacionado con la edad temprana en que ocurre el embarazo.
+
+### **Información del Padre**
+- Se identificó un alto porcentaje de registros con información ausente sobre el padre, especialmente en variables como ocupación, municipio de nacimiento y grupo étnico.
+- En los casos donde se cuenta con datos, se observó una brecha de edad significativa entre la madre y el padre en algunos registros, lo que podría indicar patrones de unión con hombres de mayor edad.
+
+### **Atención Médica y Condiciones del Parto**
+- Un porcentaje significativo de partos no se realizó en instituciones de salud, lo que podría reflejar barreras en el acceso a servicios médicos.
+- Se detectó variabilidad en el peso al nacer de los bebés, con algunos casos de bajo peso que podrían estar asociados con condiciones de salud materna o falta de atención médica prenatal adecuada.
+
+### **Consideraciones Finales**
+El análisis exploratorio de estos datos brinda una visión preliminar sobre la maternidad adolescente en Guatemala, destacando factores como la falta de información del padre, las disparidades en acceso a atención médica y la relación entre grupo étnico y edad materna. Estos hallazgos pueden servir como base para estudios más profundos y el diseño de políticas públicas enfocadas en la educación, la prevención del embarazo adolescente y la mejora del acceso a servicios de salud materno-infantil.
+
 
