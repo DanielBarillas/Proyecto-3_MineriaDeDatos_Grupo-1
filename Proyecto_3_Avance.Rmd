@@ -3,7 +3,7 @@ title: "Proyecto 3. Avances 1. Eda y Clustering"
 author: 
   - "Pablo Daniel Barillas Moreno, Carné No. 22193"
   - "Mathew Cordero Aquino, Carné No. 22982"
-   - "Rafael Andres Chivalan"
+   - "Rafael Andres Chivalan 21534"
 output:
   html_document: default
   pdf_document:
@@ -1783,15 +1783,28 @@ Obervamos que muchos de las madres adolescentes no reciben atencion medica al mo
 
 ### a.	Describan la situación problemática que los lleva a plantear un problema a resolver.
 
-```{r}
+LEl análisis revela una alta incidencia de maternidad adolescente en el grupo étnico maya, seguido por el garífuna, mientras que en el mestizo no se observa una presencia significativa. Esta situación sugiere una relación entre el embarazo adolescente y la ubicación geográfica, ya que en regiones como Alta Verapaz, donde predomina la población maya, se registran altos índices de madres adolescentes.
 
-```
+Además, se ha identificado una diferencia de edad notable entre las madres adolescentes y sus parejas, en algunos casos alcanzando niveles preocupantes desde un punto de vista legal y social. Esta disparidad de edad puede implicar relaciones desiguales de poder, que afectan la autonomía y el bienestar de las adolescentes.
+
+Otro factor crítico es la falta de acceso a atención médica en el momento del parto, lo que aumenta los riesgos tanto para la madre como para el bebé. Se ha observado que las complicaciones durante el embarazo en adolescentes pueden estar relacionadas con nacimientos prematuros y bajo peso en los recién nacidos.
+
+Estos hallazgos evidencian la vulnerabilidad de ciertos grupos étnicos y regiones en cuanto a la maternidad adolescente y la falta de atención médica, lo que subraya la necesidad de intervenciones específicas para mejorar la salud maternoinfantil y prevenir embarazos en menores de edad.
 
 ### b.	Enuncien un problema científico y unos objetivos preliminares.
 
-```{r}
+¿Cómo influye la diferencia de edad entre los padres, el grupo étnico y el acceso a atención médica en la prevalencia del embarazo adolescente y en las condiciones de salud maternoinfantil en Guatemala?
 
-```
+Objetivos Preliminares
+1.Analizar la relación entre la diferencia de edad en las parejas y la incidencia de embarazo adolescente, evaluando posibles patrones de desigualdad y riesgos asociados.
+
+2.Identificar los grupos étnicos con mayor prevalencia de maternidad adolescente, explorando factores socioeconómicos y culturales que contribuyen a esta problemática.
+
+3.Evaluar el acceso a atención médica durante el parto en madres adolescentes, determinando qué factores influyen en la falta de atención médica y sus consecuencias.
+
+4.Establecer la correlación entre la edad materna y el peso al nacer de los bebés, para entender los posibles efectos del embarazo adolescente en la salud neonatal.
+
+5.Proponer estrategias para reducir la incidencia del embarazo adolescente en los grupos más vulnerables, considerando intervenciones en educación, salud y apoyo comunitario.
 
 ### c.	Describan los datos que tienen para responder el problema planteado. Esto incluye el estado en que se encontró el o los conjuntos de datos y las operaciones de limpieza que realizaron, en caso de que hayan sido necesarias.
 
