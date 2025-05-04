@@ -1,0 +1,43 @@
+
+
+```{r}
+# 📥 Cargar el dataset unificado
+load("Nacimientos_Data_Final.RData")
+
+# 🧹 Eliminar variables innecesarias si existen
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas))
+
+# 🔄 Normalización Z-score de la variable respuesta
+dataset_final$peso_total_g_z <- scale(dataset_final$peso_total_g)[,1]
+
+# 📊 División de datos (80% entrenamiento, 20% prueba)
+library(caTools)
+set.seed(123)
+split <- sample.split(dataset_final$peso_total_g_z, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+# 📈 Modelo de Regresión Lineal con Interacciones
+# Usando Edadm (edad madre), Escivm (estado civil madre), Escolam (escolaridad madre)
+modelo_interaccion <- lm(peso_total_g_z ~ Edadm * Escivm + Edadm * Escolam, data = train_set)
+
+# 📃 Resumen del modelo
+summary(modelo_interaccion)
+
+# 🔮 Predicciones en el conjunto de prueba
+predicciones <- predict(modelo_interaccion, newdata = test_set)
+
+# 📏 Evaluación del modelo (sobre variable normalizada)
+library(Metrics)
+rmse_valor <- rmse(test_set$peso_total_g_z, predicciones)
+mae_valor  <- mae(test_set$peso_total_g_z, predicciones)
+r2_train   <- summary(modelo_interaccion)$r.squared
+
+# 📤 Resultados
+cat("Evaluación del Modelo con Interacciones (Variable Normalizada):\n")
+cat("RMSE:", round(rmse_valor, 4), "\n")
+cat("MAE:", round(mae_valor, 4), "\n")
+cat("R² (Entrenamiento):", round(r2_train, 4), "\n")
+```
+
+
