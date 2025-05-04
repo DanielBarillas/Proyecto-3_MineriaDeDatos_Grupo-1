@@ -1,0 +1,427 @@
+**⚠️ Este bloque fue utilizado únicamente para generar el archivo limpio 'datos_nacimientos_de_2009_a_2022.RData'.**
+
+**No es necesario volver a ejecutarlo a menos que se modifiquen los datos fuente (.sav).**
+
+```{r, eval = FALSE}
+library(haven)
+library(dplyr)
+library(purrr)
+library(stringr)
+
+# Ruta donde están los .sav
+ruta <- "Nacimientos"
+archivos <- list.files(path = ruta, pattern = "\\.sav$", full.names = TRUE)
+
+# Diccionario de equivalencias para unificar nombres
+diccionario_nombres <- c(
+  "Viapar"     = "ViaPar",
+  "Pueblopp"   = "PuebloPP",
+  "Pueblopm"   = "PuebloPM",
+  "ciuomad"    = "Ciuomad",
+  "ciuopad"    = "Ciuopad",
+  "munnam"     = "Munpnam",
+  "mupreg"     = "Mupreg",
+  "muprep"     = "Muprep",
+  "muprem"     = "Muprem",
+  "mupnam"     = "Mupnam"
+)
+
+# Función para renombrar columnas según diccionario
+renombrar_columnas <- function(df) {
+  names(df) <- recode(names(df), !!!diccionario_nombres)
+  return(df)
+}
+
+# Paso 1: Obtener todas las columnas posibles estandarizadas
+nombres_globales <- archivos %>%
+  map(~ {
+    df <- read_sav(.x)
+    names(df) <- recode(names(df), !!!diccionario_nombres)
+    names(df)
+  }) %>%
+  flatten_chr() %>%
+  unique()
+
+# Paso 2: Leer, limpiar, completar y etiquetar año
+leer_estandarizado <- function(archivo) {
+  tryCatch({
+    df <- read_sav(archivo)
+    df <- renombrar_columnas(df)
+    df <- df %>% mutate(across(everything(), as.character))
+
+    # Agregar columnas faltantes como NA
+    faltantes <- setdiff(nombres_globales, names(df))
+    df[faltantes] <- NA
+    df <- df[, nombres_globales]
+
+    # Agregar columna del año
+    df$archivo <- basename(archivo)
+    df$anio <- stringr::str_extract(df$archivo, "\\d{4}")
+
+    return(df)
+  }, error = function(e) {
+    message("❌ Error en ", archivo, ": ", e$message)
+    return(NULL)
+  })
+}
+
+# Unir todos los archivos estandarizados
+datos_completos <- archivos %>%
+  map(leer_estandarizado) %>%
+  bind_rows()
+
+# 🔄 Convertir variables clave a numéricas
+datos_completos <- datos_completos %>%
+  mutate(
+    Edadp = as.numeric(Edadp),
+    Libras = as.numeric(Libras),
+    Onzas = as.numeric(Onzas)
+  )
+
+# Guardar el .RData final
+save(datos_completos, file = "datos_nacimientos_de_2009_a_2022.RData")
+
+cat("✅ Archivo listo: 'datos_nacimientos_limpio.RData'\n")
+cat("📦 Observaciones:", nrow(datos_completos), " | Variables:", ncol(datos_completos), "\n")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+#### Limpieza de los datos
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+ruta <- "./datos_nacimientos_de_2009_a_2022.RData"
+
+# Cargar el archivo RData
+load(ruta)
+
+
+```
+
+```{r}
+datos_limpios <- datos_completos %>%
+  mutate(
+    Edadp  = as.numeric(Edadp),
+    Edadm  = as.numeric(Edadm),
+    Libras = as.numeric(Libras),
+    Onzas  = as.numeric(Onzas),
+    Tohite = as.numeric(Tohite),
+    Tohinm = as.numeric(Tohinm),
+    Tohivi = as.numeric(Tohivi)
+  ) %>%
+  filter(
+    Edadp >= 10 & Edadp <= 90,
+    Edadm >= 10 & Edadm <= 100,
+    Libras >= 1 & Libras <= 10,
+    Onzas >= 0 & Onzas <= 15,
+    Tohite >= 0 & Tohite <= 20,
+    Tohinm >= 0 & Tohinm <= 20,
+    Tohivi >= 0 & Tohivi <= 20
+  )
+
+
+
+dataset <- datos_limpios %>% 
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+library(dplyr)
+
+dataset <- datos_limpios %>% 
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+
+# Mostrar las primeras 5 filas
+head(dataset, 5)
+
+```
+
+
+```{r}
+
+# Separar variables categóricas y numéricas
+categorical_vars <- dataset[sapply(dataset, is.factor) | sapply(dataset, is.character)]
+numeric_vars <- dataset[sapply(dataset, is.numeric)]
+
+# Crear resumen para variables categóricas
+summary_cat <- data.frame(
+  Variable = names(categorical_vars),
+  Tipo = "Categórica",
+  Total_Valores = sapply(categorical_vars, length),
+  Total_NA = sapply(categorical_vars, function(x) sum(is.na(x)))
+)
+
+# Crear resumen para variables numéricas
+summary_num <- data.frame(
+  Variable = names(numeric_vars),
+  Tipo = "Numérica",
+  Total_Valores = sapply(numeric_vars, length),
+  Total_NA = sapply(numeric_vars, function(x) sum(is.na(x)))
+)
+
+# Unir ambos resúmenes
+summary_df <- rbind(summary_cat, summary_num)
+
+# Mostrar resultado
+print(summary_df)
+```
+
+
+
+
+Aqui ya estan en numericas pero vamos a limpiar los datos antes de proseguir . Primero veamos cuales no podemos usar que son
+
+(Areag, NA 3500753), (Gretnp, NA 3500753),  (Gretnm, NA 4143184), (mupnap, NA 4124410), (grupetma,3459637 ), (Munpnam,4124410 NAs ), (Ciuopad , 4144011) (Ciuomad, 4351917), y (archivo,4439383 ) Estas no son necesarias para el analisis debido a que 
+
+- Areag es el area donde se registro el nacimiento esto se descarta porque no nos sirve.
+- Gretnp  es el grupo etnico del padre. Lo que podemos hacer es poner no especificado, posiblemente sean de niños sin padres. 
+- Gretnm  tambien lo vamos a dejar porque nos sirve bien para saber cual es el grupo etnico solo vamos a poner no especificado.
+- mupnap  tambien lo vamos a dejar porque puede ser que el padre este ausente. Solo poner no especificado
+- grupetma Clasificación del grupo étnico de la madre (código)  esto ya lo tenemos con el grupo etnico solo se quita. 
+- Munpnam  es la alternativa a munnam  nos quedamos con la primera y los que sean na de esa usamoos el dato de munnam
+- Ciuopad igual poner no especifica
+- Ciudadmad poner igual no especifica
+- El archivo se va a quitar 
+
+Quitar las que no sirven
+
+```{r}
+dataset <- dataset %>% select(-c(Areag, archivo))
+
+```
+
+Ahora vemos el rango esto para saber que quitar y que no quitar
+```{r}
+
+sapply(dataset[, c("Gretnp", "Gretnm", "mupnap", "grupetma", "Munpnam", "Ciuopad")], unique)
+
+
+```
+
+
+Vienod esto vamos a empezar a reemplazar
+
+```{r}
+library(dplyr)
+
+dataset <- dataset %>%
+  mutate(Mupnam = ifelse(is.na(Mupnam), Munpnam, Mupnam)) %>%  # Reemplazar NA en Mupnam con Munpnam
+  select(-Munpnam)  # Eliminar Munpnam del dataset
+
+# Contar cuántos NA quedan en Mupnam
+total_na_mupnam <- sum(is.na(dataset$Mupnam))
+print(paste("Total de NA en Mupnam:", total_na_mupnam))
+
+# Mostrar las primeras filas para verificar cambios
+head(dataset)
+```
+
+
+Aqqui ya Mupnam  esta limpio sin NA
+
+Luego vamos a hacer lo dicho anteriormente
+
+- Grupo etnico reemplazar la columna Gretnm valores NA con los valores de grupetma ya que son la misma variable
+```{r}
+library(dplyr)
+
+dataset <- dataset %>%
+  mutate(Gretnm = ifelse(is.na(Gretnm), grupetma, Gretnm)) %>%  # Reemplazar NA en Gretnm con los valores de grupetma
+  select(-grupetma)  # Eliminar grupetma del dataset
+
+# Contar cuántos NA quedan en Gretnm
+total_na_gretnm <- sum(is.na(dataset$Gretnm))
+print(paste("Total de NA en Gretnm:", total_na_gretnm))
+
+# Mostrar las primeras filas para verificar cambios
+head(dataset)
+
+
+
+```
+
+Poner no especificado en :  
+```{r}
+dataset <- dataset %>%
+  mutate(Gretnm = ifelse(is.na(Gretnm), "No especificado", Gretnm))
+ 
+dataset <- dataset %>% 
+  mutate(Ciuopad = ifelse(is.na(Ciuopad), "No especificado", Ciuopad)) %>%
+  mutate(Gretnp = ifelse(is.na(Gretnp), "No especificado", Gretnp))%>%
+  mutate(mupnap = ifelse(is.na(mupnap), "No especificado", mupnap))%>%
+  mutate(Ciuomad = ifelse(is.na(Ciuomad), "No especificado", Ciuomad))
+```
+
+
+
+
+
+Ahora vemos los na otra vez
+
+```{r}
+
+# Separar variables categóricas y numéricas
+categorical_vars <- dataset[sapply(dataset, is.factor) | sapply(dataset, is.character)]
+numeric_vars <- dataset[sapply(dataset, is.numeric)]
+
+# Crear resumen para variables categóricas
+summary_cat <- data.frame(
+  Variable = names(categorical_vars),
+  Tipo = "Categórica",
+  Total_Valores = sapply(categorical_vars, length),
+  Total_NA = sapply(categorical_vars, function(x) sum(is.na(x)))
+)
+
+# Crear resumen para variables numéricas
+summary_num <- data.frame(
+  Variable = names(numeric_vars),
+  Tipo = "Numérica",
+  Total_Valores = sapply(numeric_vars, length),
+  Total_NA = sapply(numeric_vars, function(x) sum(is.na(x)))
+)
+
+# Unir ambos resúmenes
+summary_df <- rbind(summary_cat, summary_num)
+
+# Mostrar resultado
+print(summary_df)
+```
+
+
+
+Con las que quedan haremos lo siguiente
+
+- Añoocu .Se tomaran los valores na por lo de año de registro (Añoreg) porque los año que ocurrieron es igual a los que se registraron.
+- Mupnap  municipio de nacimiento del padre se pondra No especificado
+- Naciop  poner la mas comun ya que la mayoria son de guatemala
+- Ocupap poner No especificado, igual puede ser porque el padre no este 
+- Naciom poner la mas comun ya que la mayoria son de guatemala. 
+- Ocupam poner No especificado
+- Munpnap poner "No especificado" que es el municipio de nacimiento del padre
+- TipoIns  poner que no hubo porque no hubo atencion medica de parte de una institucion
+- ViaPar poner Otro, porque no se sabe. 
+
+- Escolap	poner que No tiene
+- Escolam	poner que No tiene
+- Paisnacp poner que no especificado
+- Paisrep	poner lo mismo que Paisnacp
+- Paisnacm Poner no especificado
+- Paisrem	 Poner lo mismo que Paisnacm
+
+```{r}
+library(dplyr)
+
+
+most_common_naciop <- names(sort(table(dataset$Naciop), decreasing = TRUE))[1]
+most_common_naciom <- names(sort(table(dataset$Naciom), decreasing = TRUE))[1]
+
+dataset <- dataset %>%
+  mutate(
+    Mupnap = "No especificado",
+    Naciop = ifelse(is.na(Naciop), most_common_naciop, Naciop),  # Reemplazar NA con el valor más común
+    Ocupap = "No especificado",
+    Naciom = ifelse(is.na(Naciom), most_common_naciom, Naciom),  # Reemplazar NA con el valor más común
+    Ocupam = "No especificado",
+    Munpnap = "No especificado",
+    TipoIns = "No hubo",  # No hubo atención médica institucional
+    ViaPar = "Otro",  # No se sabe
+    Escolap = "No tiene",  # Sin escolaridad
+    Escolam = "No tiene",  # Sin escolaridad
+    Paisnacp = "No especificado",
+    Paisrep = "No especificado",
+    Paisnacm = "No especificado",
+    Paisrem = "No especificado",
+    PuebloPP = "No especificado"
+  )
+
+
+head(dataset)
+
+```
+
+
+- PuebloPP	 los No especificado colocar  el valor de la fila de Gretnp ya que son lo mismo
+- PuebloPM   los na colocar los valores de Gretnm  y si hay na despues colocar No especificado
+
+```{r}
+library(dplyr)
+
+# Realizar los reemplazos en un código aparte
+dataset <- dataset %>%
+  mutate(
+    PuebloPP = ifelse(PuebloPP == "No especificado", Gretnp, PuebloPP),  # Reemplazar No especificado con Gretnp
+    PuebloPM = ifelse(is.na(PuebloPM), Gretnm, PuebloPM),  # Reemplazar NA con Gretnm
+    PuebloPM = ifelse(is.na(PuebloPM), "No especificado", PuebloPM)  # Reemplazar NA restantes con "No especificado"
+  )
+
+# Mostrar las primeras filas para verificar los cambios
+head(dataset)
+
+```
+Reemplazaar los Añoocu  por lo que habiamos dicho antes
+
+```{r}
+dataset <- dataset %>%
+  mutate(
+    Añoocu = ifelse(is.na(Añoocu), Añoreg, Añoocu)  # Reemplazar NA en Añoocu con el valor de Añoreg
+  )
+```
+
+
+
+Ahora mostrar los na
+
+
+```{r}
+
+# Separar variables categóricas y numéricas
+categorical_vars <- dataset[sapply(dataset, is.factor) | sapply(dataset, is.character)]
+numeric_vars <- dataset[sapply(dataset, is.numeric)]
+
+# Crear resumen para variables categóricas
+summary_cat <- data.frame(
+  Variable = names(categorical_vars),
+  Tipo = "Categórica",
+  Total_Valores = sapply(categorical_vars, length),
+  Total_NA = sapply(categorical_vars, function(x) sum(is.na(x)))
+)
+
+# Crear resumen para variables numéricas
+summary_num <- data.frame(
+  Variable = names(numeric_vars),
+  Tipo = "Numérica",
+  Total_Valores = sapply(numeric_vars, length),
+  Total_NA = sapply(numeric_vars, function(x) sum(is.na(x)))
+)
+
+# Unir ambos resúmenes
+summary_df <- rbind(summary_cat, summary_num)
+
+# Mostrar resultado
+print(summary_df)
+```
+```{r}
+save(dataset, file = "datos_nacimientos_de_2009_a_2022.RData")
+
+```
+
+Ya estan listos los datos
