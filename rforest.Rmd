@@ -104,7 +104,10 @@ cat("📦 Observaciones:", nrow(datos_completos), " | Variables:", ncol(datos_co
 
 
 
+```{r}
 
+
+```
 
 #### Limpieza de los datos
 ```{r}
@@ -129,7 +132,8 @@ datos_limpios <- datos_completos %>%
     Onzas  = as.numeric(Onzas),
     Tohite = as.numeric(Tohite),
     Tohinm = as.numeric(Tohinm),
-    Tohivi = as.numeric(Tohivi)
+    Tohivi = as.numeric(Tohivi),
+    peso_total_lb = Libras + (Onzas / 16)
   ) %>%
   filter(
     Edadp >= 10 & Edadp <= 90,
@@ -420,8 +424,272 @@ summary_df <- rbind(summary_cat, summary_num)
 print(summary_df)
 ```
 ```{r}
-save(dataset, file = "datos_nacimientos_de_2009_a_2022.RData")
+
+dataset$peso_total_g <- dataset$peso_total_lb * 453.592
+```
+
+
+Ahora encode y normalizacion
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+
+categorical_vars <- dataset %>% select(where(is.factor))  # Solo las variables categóricas
+
+
+mapping_list <- lapply(categorical_vars, function(x) {
+  levels(x)  # Almacena los niveles de cada variable categórica
+})
+
+
+dataset_numerico <- dataset %>%
+  mutate_if(is.factor, as.numeric)  # Convierte a numérico
+
+```
+
+```{r}
+
+print(colnames(dataset))
+```
+
+
+Ahora vamos a realizar la normalizacion de los datos numericos
+
+```{r}
+# 2. Seleccionar solo las columnas numéricas para la normalización
+dataset_numeric_columns <- dataset_numerico %>% select(where(is.numeric))
+
+# 3. Normalizar los datos
+dataset_normalizado <- dataset_numeric_columns %>%
+  mutate(across(everything(), ~ (. - min(.)) / (max(.) - min(.))))
+
+
+dataset_normalizado <- dataset_normalizado %>%
+  select(-any_of(c("Mupocu", "Muprep", "Mupnap", "Muprem", "Mupnam", 
+                   "grupetma", "Ciuopad", "Ciuomad", "Munpnam")))
+
+```
+
+
+Ahora vamos a ver si esta balanceado
+
+```{r}
+# Ver los tipos de las columnas en dataset_numerico
+column_types <- sapply(dataset_numerico, class)
+
+# Mostrar las columnas numéricas y categóricas
+numeric_columns <- names(column_types[column_types == "numeric"])
+factor_columns <- names(column_types[column_types == "factor"])
+
+# Imprimir los resultados
+cat("Columnas numéricas:\n", paste(numeric_columns, collapse = ", "), "\n")
+cat("Columnas categóricas:\n", paste(factor_columns, collapse = ", "), "\n")
+
+
+print(dataset_numerico)
+
+```
+
+
+```{r}
+
+
+library(dplyr)
+library(purrr)
+
+# 1. Detectar columnas categóricas (tipo character o factor)
+categorical_vars <- dataset %>%
+  select(where(~ is.character(.x) || is.factor(.x)))
+
+# 2. Convertir columnas categóricas a factor y luego a numérico
+dataset_categorico_codificado <- categorical_vars %>%
+  mutate(across(everything(), ~ as.numeric(as.factor(.))))
+
+# 3. Seleccionar columnas que ya son numéricas
+dataset_numerico <- dataset %>%
+  select(where(is.numeric))
+
+# 4. Combinar ambos en un único dataset numérico
+dataset_final <- bind_cols(dataset_numerico, dataset_categorico_codificado)
+
+# 5. Verificar la estructura final
+str(dataset_final)
+
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+save(dataset_final, file = "Nacimientos_Data_Final.RData")
 
 ```
 
 Ya estan listos los datos
+
+
+
+## PREPARAR DATOS
+
+Se hizo un ecodign de OneHot a las variables categorias
+
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+ruta <- "./datos_nacimientos_de_2009_a_2022.RData"
+
+# Cargar el archivo RData
+load(ruta)
+
+dataset$Peso_g <- dataset$Peso_Onzas * 28.3495
+
+```
+
+
+Vamos a hacer un encode de las variables categoricas
+
+```{r}
+
+categorical_vars <- dataset %>% select(where(is.factor))  # Solo las variables categóricas
+
+
+mapping_list <- lapply(categorical_vars, function(x) {
+  levels(x)  # Almacena los niveles de cada variable categórica
+})
+
+
+dataset_numerico <- dataset %>%
+  mutate_if(is.factor, as.numeric)  # Convierte a numérico
+
+```
+
+
+Ahora vamos a realizar la normalizacion de los datos numericos
+
+```{r}
+# 2. Seleccionar solo las columnas numéricas para la normalización
+dataset_numeric_columns <- dataset_numerico %>% select(where(is.numeric))
+
+# 3. Normalizar los datos
+dataset_normalizado <- dataset_numeric_columns %>%
+  mutate(across(everything(), ~ (. - min(.)) / (max(.) - min(.))))
+
+
+dataset_normalizado <- dataset_normalizado %>%
+  select(-any_of(c("Mupocu", "Muprep", "Mupnap", "Muprem", "Mupnam", 
+                   "grupetma", "Ciuopad", "Ciuomad", "Munpnam")))
+
+```
+
+
+Ahora vamos a ver si esta balanceado
+
+```{r}
+# Ver los tipos de las columnas en dataset_numerico
+column_types <- sapply(dataset_numerico, class)
+
+# Mostrar las columnas numéricas y categóricas
+numeric_columns <- names(column_types[column_types == "numeric"])
+factor_columns <- names(column_types[column_types == "factor"])
+
+# Imprimir los resultados
+cat("Columnas numéricas:\n", paste(numeric_columns, collapse = ", "), "\n")
+cat("Columnas categóricas:\n", paste(factor_columns, collapse = ", "), "\n")
+
+
+print(dataset_numerico)
+
+```
+
+
+```{r}
+
+
+library(dplyr)
+library(purrr)
+
+# 1. Detectar columnas categóricas (tipo character o factor)
+categorical_vars <- dataset %>%
+  select(where(~ is.character(.x) || is.factor(.x)))
+
+# 2. Convertir columnas categóricas a factor y luego a numérico
+dataset_categorico_codificado <- categorical_vars %>%
+  mutate(across(everything(), ~ as.numeric(as.factor(.))))
+
+# 3. Seleccionar columnas que ya son numéricas
+dataset_numerico <- dataset %>%
+  select(where(is.numeric))
+
+# 4. Combinar ambos en un único dataset numérico
+dataset_final <- bind_cols(dataset_numerico, dataset_categorico_codificado)
+
+# 5. Verificar la estructura final
+str(dataset_final)
+
+
+```
+
+```{r}
+
+```
+
+
+Ahora aplicaremos PCA
+
+```{r}
+# Excluir variables relacionadas con el peso
+variables_a_excluir <- c("Peso_g", "Peso_Onzas", "Libras", "Onzas")
+
+# Seleccionar solo las variables predictoras válidas
+dataset_pca_input <- dataset_final %>%
+  select(-all_of(variables_a_excluir))
+
+dataset_pca_input_clean <- dataset_pca_input[, apply(dataset_pca_input, 2, function(x) var(x, na.rm = TRUE) != 0)]
+
+# Aplicar PCA solo sobre las columnas válidas
+pca_result <- prcomp(dataset_pca_input_clean, center = TRUE, scale. = TRUE)
+
+# Revisar resultados
+summary(pca_result)
+
+```
+
+
+
+Vamos a utilizar 21 componentes principales para poder realizar nuestro modelo
+
+
+
+
+
+Ahora vamos a utilizar regresion lineal multiple ya que nuestro variable es 
