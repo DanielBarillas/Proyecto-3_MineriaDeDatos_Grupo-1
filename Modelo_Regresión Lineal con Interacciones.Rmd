@@ -1,4 +1,5 @@
 
+### Modelo de Regresión Lineal con Interacciones...
 
 ```{r}
 # 📥 Cargar el dataset unificado
@@ -38,6 +39,53 @@ cat("Evaluación del Modelo con Interacciones (Variable Normalizada):\n")
 cat("RMSE:", round(rmse_valor, 4), "\n")
 cat("MAE:", round(mae_valor, 4), "\n")
 cat("R² (Entrenamiento):", round(r2_train, 4), "\n")
+```
+### Curva de aprendizaje del modelo...
+
+```{r}
+# 📦 Requiere: Metrics, ggplot2
+library(Metrics)
+library(ggplot2)
+
+# Vectores para guardar resultados
+train_rmse <- c()
+test_rmse  <- c()
+sizes <- seq(0.1, 1.0, by = 0.1)  # 10%, 20%, ..., 100%
+
+# 🔁 Calcular RMSE para distintos tamaños del conjunto de entrenamiento
+set.seed(123)
+for (size in sizes) {
+  idx <- sample(1:nrow(train_set), size = floor(size * nrow(train_set)))
+  subset_train <- train_set[idx, ]
+
+  # Entrenar el modelo con interacciones
+  model_temp <- lm(peso_total_g_z ~ Edadm * Escivm + Edadm * Escolam, data = subset_train)
+
+  # Predicciones
+  pred_train <- predict(model_temp, newdata = subset_train)
+  pred_test  <- predict(model_temp, newdata = test_set)
+
+  # Calcular errores
+  train_rmse <- c(train_rmse, rmse(subset_train$peso_total_g_z, pred_train))
+  test_rmse  <- c(test_rmse, rmse(test_set$peso_total_g_z, pred_test))
+}
+
+# 📈 Crear data frame para graficar
+learning_data <- data.frame(
+  Tamaño_Entrenamiento = sizes * 100,
+  RMSE_Entrenamiento = train_rmse,
+  RMSE_Prueba = test_rmse
+)
+
+# 🎨 Graficar curva de aprendizaje
+ggplot(learning_data, aes(x = Tamaño_Entrenamiento)) +
+  geom_line(aes(y = RMSE_Entrenamiento, color = "Entrenamiento"), size = 1.2) +
+  geom_line(aes(y = RMSE_Prueba, color = "Prueba"), size = 1.2) +
+  labs(title = "Curva de Aprendizaje: Regresión Lineal con Interacciones",
+       x = "Tamaño del Conjunto de Entrenamiento (%)",
+       y = "Error Cuadrático Medio (RMSE)",
+       color = "Conjunto") +
+  theme_minimal()
 ```
 
 
