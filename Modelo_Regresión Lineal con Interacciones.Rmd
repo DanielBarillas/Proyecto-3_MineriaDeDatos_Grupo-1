@@ -1,89 +1,156 @@
 
-### Modelo de Regresión Lineal con Interacciones...
+### Modelo de Random Forest de Clasificación Balanceado...
 
 ```{r}
-# 📥 Cargar el dataset unificado
+# 📥 Cargar y preparar
 load("Nacimientos_Data_Final.RData")
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas, Peso_total_lb))
 
-# 🧹 Eliminar variables innecesarias si existen
-dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas))
+# 🎯 Nueva variable binaria
+dataset_final$bajo_peso <- ifelse(dataset_final$peso_total_g < 2500, "Sí", "No")
+dataset_final$bajo_peso <- as.factor(dataset_final$bajo_peso)
 
-# 🔄 Normalización Z-score de la variable respuesta
-dataset_final$peso_total_g_z <- scale(dataset_final$peso_total_g)[,1]
-
-# 📊 División de datos (80% entrenamiento, 20% prueba)
+# 📊 División
 library(caTools)
 set.seed(123)
-split <- sample.split(dataset_final$peso_total_g_z, SplitRatio = 0.8)
+split <- sample.split(dataset_final$bajo_peso, SplitRatio = 0.8)
 train_set <- subset(dataset_final, split == TRUE)
 test_set  <- subset(dataset_final, split == FALSE)
 
-# 📈 Modelo de Regresión Lineal con Interacciones
-# Usando Edadm (edad madre), Escivm (estado civil madre), Escolam (escolaridad madre)
-modelo_interaccion <- lm(peso_total_g_z ~ Edadm * Escivm + Edadm * Escolam, data = train_set)
+# 🌳 Árbol de Clasificación
+library(rpart)
+modelo_binario <- rpart(bajo_peso ~ Edadm + Sexo + Tipar + Asisrec + Tohite, 
+                        data = train_set, method = "class", control = rpart.control(cp = 0.01))
 
-# 📃 Resumen del modelo
-summary(modelo_interaccion)
+# 🔮 Predicción
+pred_bin <- predict(modelo_binario, newdata = test_set, type = "class")
 
-# 🔮 Predicciones en el conjunto de prueba
-predicciones <- predict(modelo_interaccion, newdata = test_set)
+# 📏 Métricas
+library(caret)
+conf_bin <- confusionMatrix(pred_bin, test_set$bajo_peso, positive = "Sí")
+print(conf_bin)
+`
+```{r}
+# 📥 Cargar y preparar
+load("Nacimientos_Data_Final.RData")
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas))
 
-# 📏 Evaluación del modelo (sobre variable normalizada)
-library(Metrics)
-rmse_valor <- rmse(test_set$peso_total_g_z, predicciones)
-mae_valor  <- mae(test_set$peso_total_g_z, predicciones)
-r2_train   <- summary(modelo_interaccion)$r.squared
+# 🎯 Variable binaria de bajo peso
+dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
 
-# 📤 Resultados
-cat("Evaluación del Modelo con Interacciones (Variable Normalizada):\n")
-cat("RMSE:", round(rmse_valor, 4), "\n")
-cat("MAE:", round(mae_valor, 4), "\n")
-cat("R² (Entrenamiento):", round(r2_train, 4), "\n")
+# 📊 División de datos (80/20)
+library(caTools)
+set.seed(123)
+split <- sample.split(dataset_final$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+# 🔢 Contar casos de clase minoritaria
+table(train_set$peso_binario)
+
+# 🌲 Modelo Random Forest balanceado
+library(randomForest)
+set.seed(123)
+modelo_rf_balanceado <- randomForest(
+  peso_binario ~ Edadm + Sexo + Tipar + Asisrec + Tohite,
+  data = train_set,
+  ntree = 100,
+  mtry = 3,
+  sampsize = c(Bajo = 10000, NoBajo = 10000),
+  importance = TRUE
+)
+
+# 🔮 Predicciones
+pred_rf_bin <- predict(modelo_rf_balanceado, newdata = test_set)
+
+# 📏 Matriz de Confusión personalizada
+conf_matrix <- table(Predicho = pred_rf_bin, Real = test_set$peso_binario)
+print(conf_matrix)
+
+# 📦 Métricas con caret
+library(caret)
+library(e1071)  # necesario para caret
+
+eval_metrics <- confusionMatrix(pred_rf_bin, test_set$peso_binario, positive = "Bajo")
+print(eval_metrics)
+
+# 📊 (Opcional) Visualización de importancia de variables
+# varImpPlot(modelo_rf_balanceado)
 ```
+
+
 ### Curva de aprendizaje del modelo...
 
 ```{r}
-# 📦 Requiere: Metrics, ggplot2
-library(Metrics)
+# 📥 Cargar y preparar
+load("Nacimientos_Data_Final.RData")
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas))
+
+# 🔁 Submuestreo para limitar uso de memoria
+set.seed(123)
+dataset_final <- dataset_final[sample(nrow(dataset_final), 5000), ]
+
+# 🎯 Crear variable binaria de bajo peso
+dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+
+# 📊 División
+library(caTools)
+split <- sample.split(dataset_final$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+# 📦 Librerías
+library(randomForest)
+library(caret)
 library(ggplot2)
 
-# Vectores para guardar resultados
-train_rmse <- c()
-test_rmse  <- c()
-sizes <- seq(0.1, 1.0, by = 0.1)  # 10%, 20%, ..., 100%
+# 🔁 Curva de aprendizaje
+train_scores <- c()
+test_scores  <- c()
+sizes <- seq(0.1, 0.6, by = 0.1)  # Reducido hasta 60% por memoria
 
-# 🔁 Calcular RMSE para distintos tamaños del conjunto de entrenamiento
 set.seed(123)
 for (size in sizes) {
   idx <- sample(1:nrow(train_set), size = floor(size * nrow(train_set)))
   subset_train <- train_set[idx, ]
-
-  # Entrenar el modelo con interacciones
-  model_temp <- lm(peso_total_g_z ~ Edadm * Escivm + Edadm * Escolam, data = subset_train)
-
-  # Predicciones
-  pred_train <- predict(model_temp, newdata = subset_train)
-  pred_test  <- predict(model_temp, newdata = test_set)
-
-  # Calcular errores
-  train_rmse <- c(train_rmse, rmse(subset_train$peso_total_g_z, pred_train))
-  test_rmse  <- c(test_rmse, rmse(test_set$peso_total_g_z, pred_test))
+  
+  # 🌲 Random Forest con menos árboles
+  rf_model <- randomForest(peso_binario ~ Edadm + Sexo + Tipar + Asisrec + Tohite,
+                           data = subset_train,
+                           ntree = 30)
+  
+  # 🔮 Predicciones
+  pred_train <- predict(rf_model, newdata = subset_train)
+  pred_test  <- predict(rf_model, newdata = test_set)
+  
+  # 📊 Balanced Accuracy
+  acc_train <- confusionMatrix(pred_train, subset_train$peso_binario)$byClass["Balanced Accuracy"]
+  acc_test  <- confusionMatrix(pred_test, test_set$peso_binario)$byClass["Balanced Accuracy"]
+  
+  # 🔢 Guardar
+  train_scores <- c(train_scores, acc_train)
+  test_scores  <- c(test_scores, acc_test)
+  
+  # 🧹 Liberar memoria
+  rm(rf_model, pred_train, pred_test)
+  gc()
 }
 
-# 📈 Crear data frame para graficar
-learning_data <- data.frame(
-  Tamaño_Entrenamiento = sizes * 100,
-  RMSE_Entrenamiento = train_rmse,
-  RMSE_Prueba = test_rmse
+# 📈 Visualización
+df_learning <- data.frame(
+  Porcentaje_Entrenamiento = sizes * 100,
+  Balanced_Accuracy_Train = train_scores,
+  Balanced_Accuracy_Test  = test_scores
 )
 
-# 🎨 Graficar curva de aprendizaje
-ggplot(learning_data, aes(x = Tamaño_Entrenamiento)) +
-  geom_line(aes(y = RMSE_Entrenamiento, color = "Entrenamiento"), size = 1.2) +
-  geom_line(aes(y = RMSE_Prueba, color = "Prueba"), size = 1.2) +
-  labs(title = "Curva de Aprendizaje: Regresión Lineal con Interacciones",
+ggplot(df_learning, aes(x = Porcentaje_Entrenamiento)) +
+  geom_line(aes(y = Balanced_Accuracy_Train, color = "Entrenamiento"), size = 1.2) +
+  geom_line(aes(y = Balanced_Accuracy_Test, color = "Prueba"), size = 1.2) +
+  labs(title = "Curva de Aprendizaje - Random Forest (Balanced Accuracy)",
        x = "Tamaño del Conjunto de Entrenamiento (%)",
-       y = "Error Cuadrático Medio (RMSE)",
+       y = "Balanced Accuracy",
        color = "Conjunto") +
   theme_minimal()
 ```
