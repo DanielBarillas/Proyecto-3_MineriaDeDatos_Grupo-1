@@ -155,4 +155,58 @@ ggplot(df_learning, aes(x = Porcentaje_Entrenamiento)) +
   theme_minimal()
 ```
 
+### Aplicando PCA al modelo Random Forest de Clasificación Balanceado...
+
+```{r}
+# 📥 Cargar los datos
+load("Nacimientos_Data_Final.RData")
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas))
+
+# 🎯 Crear variable binaria del bajo peso
+dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+
+# 🧹 Seleccionar variables numéricas para PCA
+pca_vars <- dataset_final[, c("Edadm", "Tohite")]
+
+# 🧪 Escalar y aplicar PCA
+pca_result <- prcomp(pca_vars, center = TRUE, scale. = TRUE)
+summary(pca_result)  # Para ver cuánta varianza explica cada componente
+
+# 📦 Agregar los primeros 2 componentes principales al dataset
+dataset_final$PC1 <- pca_result$x[,1]
+dataset_final$PC2 <- pca_result$x[,2]
+
+# 📊 División
+library(caTools)
+set.seed(123)
+split <- sample.split(dataset_final$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+# 🌲 Random Forest con PCA
+library(randomForest)
+set.seed(123)
+modelo_rf_pca <- randomForest(
+  peso_binario ~ PC1 + PC2 + Sexo + Tipar + Asisrec,
+  data = train_set,
+  ntree = 100,
+  mtry = 3,
+  sampsize = c(Bajo = 10000, NoBajo = 10000),
+  importance = TRUE
+)
+
+# 🔮 Predicción
+pred_rf_pca <- predict(modelo_rf_pca, newdata = test_set)
+
+# 📏 Evaluación
+library(caret)
+library(e1071)
+conf_matrix <- confusionMatrix(pred_rf_pca, test_set$peso_binario, positive = "Bajo")
+print(conf_matrix)
+
+# 🔍 Importancia
+varImpPlot(modelo_rf_pca)
+
+```
 
