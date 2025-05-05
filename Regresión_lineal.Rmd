@@ -1,0 +1,49 @@
+---
+title: "Regresión_lineal"
+output: html_document
+---
+
+```{r, echo=TRUE, warning=FALSE, message=FALSE}
+
+library(caTools)
+library(Metrics)
+library(ggplot2)
+library(dplyr)  
+
+set.seed(456)
+
+
+load("Nacimientos_Data_Final.RData")
+
+
+dataset_final <- dataset_final[dataset_final$Edadm >= 15 & dataset_final$Edadm <= 50, ]
+dataset_final$peso_total_g_z <- scale(dataset_final$peso_total_g)[,1]
+dataset_final <- dataset_final[, !(names(dataset_final) %in% c("Libras", "Onzas", "Peso_Onzas"))]
+
+split <- sample.split(dataset_final$Edadm, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+modelo_mejorado <- lm(peso_total_g_z ~ poly(Edadm, 2), data = train_set)
+
+predicciones <- predict(modelo_mejorado, newdata = test_set)
+
+rmse_valor <- rmse(test_set$peso_total_g_z, predicciones)
+mse_valor <- mse(test_set$peso_total_g_z, predicciones)
+r2_train <- summary(modelo_mejorado)$r.squared
+
+ggplot(train_set, aes(x = Edadm, y = peso_total_g_z)) +
+  geom_point(alpha = 0.5, color = "steelblue") +
+  geom_smooth(method = "lm", formula = y ~ poly(x, 2), 
+              color = "firebrick", se = FALSE) +
+  labs(title = "Relación Edad Materna vs Peso del Bebé",
+       x = "Edad de la Madre (años)",
+       y = "Peso del Bebé (Z-score)") +
+  theme_minimal()
+
+cat("EVALUACIÓN MEJORADA:\n",
+    "--------------------\n",
+    "RMSE:", round(rmse_valor, 4), "\n",
+    "MSE:", round(mse_valor, 4), "\n",
+    "R²:", round(r2_train, 4))
+```
