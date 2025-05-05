@@ -1,4 +1,178 @@
 
+### Limpieza de datos
+
+```{r}
+library(haven)
+library(dplyr)
+library(ggplot2)
+
+ruta <- "./datos_nacimientos_de_2009_a_2022.RData"
+
+# Cargar el archivo RData
+load(ruta)
+
+
+datos_limpios <- datos_completos %>%
+  mutate(
+    Edadp  = as.numeric(Edadp),
+    Edadm  = as.numeric(Edadm),
+    Libras = as.numeric(Libras),
+    Onzas  = as.numeric(Onzas),
+    Tohite = as.numeric(Tohite),
+    Tohinm = as.numeric(Tohinm),
+    Tohivi = as.numeric(Tohivi),
+    peso_total_lb = Libras + (Onzas / 16)
+  ) %>%
+  filter(
+    Edadp >= 10 & Edadp <= 90,
+    Edadm >= 10 & Edadm <= 100,
+    Libras >= 1 & Libras <= 10,
+    Onzas >= 0 & Onzas <= 15,
+    Tohite >= 0 & Tohite <= 20,
+    Tohinm >= 0 & Tohinm <= 20,
+    Tohivi >= 0 & Tohivi <= 20
+  )
+
+
+
+dataset <- datos_limpios %>% 
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+library(dplyr)
+
+dataset <- datos_limpios %>% 
+  mutate(Peso_Onzas = (Libras * 16) + Onzas)
+
+
+dataset <- dataset %>% select(-c(Areag, archivo))
+
+
+library(dplyr)
+
+dataset <- dataset %>%
+  mutate(Mupnam = ifelse(is.na(Mupnam), Munpnam, Mupnam)) %>%  # Reemplazar NA en Mupnam con Munpnam
+  select(-Munpnam)  # Eliminar Munpnam del dataset
+
+# Contar cuántos NA quedan en Mupnam
+total_na_mupnam <- sum(is.na(dataset$Mupnam))
+print(paste("Total de NA en Mupnam:", total_na_mupnam))
+
+# Mostrar las primeras filas para verificar cambios
+head(dataset)
+
+
+library(dplyr)
+
+dataset <- dataset %>%
+  mutate(Gretnm = ifelse(is.na(Gretnm), grupetma, Gretnm)) %>%  # Reemplazar NA en Gretnm con los valores de grupetma
+  select(-grupetma)  # Eliminar grupetma del dataset
+
+# Contar cuántos NA quedan en Gretnm
+total_na_gretnm <- sum(is.na(dataset$Gretnm))
+print(paste("Total de NA en Gretnm:", total_na_gretnm))
+
+# Mostrar las primeras filas para verificar cambios
+head(dataset)
+
+
+dataset <- dataset %>%
+  mutate(Gretnm = ifelse(is.na(Gretnm), "No especificado", Gretnm))
+ 
+dataset <- dataset %>% 
+  mutate(Ciuopad = ifelse(is.na(Ciuopad), "No especificado", Ciuopad)) %>%
+  mutate(Gretnp = ifelse(is.na(Gretnp), "No especificado", Gretnp))%>%
+  mutate(mupnap = ifelse(is.na(mupnap), "No especificado", mupnap))%>%
+  mutate(Ciuomad = ifelse(is.na(Ciuomad), "No especificado", Ciuomad))
+
+
+
+library(dplyr)
+
+
+most_common_naciop <- names(sort(table(dataset$Naciop), decreasing = TRUE))[1]
+most_common_naciom <- names(sort(table(dataset$Naciom), decreasing = TRUE))[1]
+
+dataset <- dataset %>%
+  mutate(
+    Mupnap = "No especificado",
+    Naciop = ifelse(is.na(Naciop), most_common_naciop, Naciop),  # Reemplazar NA con el valor más común
+    Ocupap = "No especificado",
+    Naciom = ifelse(is.na(Naciom), most_common_naciom, Naciom),  # Reemplazar NA con el valor más común
+    Ocupam = "No especificado",
+    Munpnap = "No especificado",
+    TipoIns = "No hubo",  # No hubo atención médica institucional
+    ViaPar = "Otro",  # No se sabe
+    Escolap = "No tiene",  # Sin escolaridad
+    Escolam = "No tiene",  # Sin escolaridad
+    Paisnacp = "No especificado",
+    Paisrep = "No especificado",
+    Paisnacm = "No especificado",
+    Paisrem = "No especificado",
+    PuebloPP = "No especificado"
+  )
+
+
+head(dataset)
+
+
+
+
+
+library(dplyr)
+
+# Realizar los reemplazos en un código aparte
+dataset <- dataset %>%
+  mutate(
+    PuebloPP = ifelse(PuebloPP == "No especificado", Gretnp, PuebloPP),  # Reemplazar No especificado con Gretnp
+    PuebloPM = ifelse(is.na(PuebloPM), Gretnm, PuebloPM),  # Reemplazar NA con Gretnm
+    PuebloPM = ifelse(is.na(PuebloPM), "No especificado", PuebloPM)  # Reemplazar NA restantes con "No especificado"
+  )
+
+# Mostrar las primeras filas para verificar los cambios
+head(dataset)
+
+
+
+dataset <- dataset %>%
+  mutate(
+    Añoocu = ifelse(is.na(Añoocu), Añoreg, Añoocu)  # Reemplazar NA en Añoocu con el valor de Añoreg
+  )
+
+
+# Separar variables categóricas y numéricas
+categorical_vars <- dataset[sapply(dataset, is.factor) | sapply(dataset, is.character)]
+numeric_vars <- dataset[sapply(dataset, is.numeric)]
+
+# Crear resumen para variables categóricas
+summary_cat <- data.frame(
+  Variable = names(categorical_vars),
+  Tipo = "Categórica",
+  Total_Valores = sapply(categorical_vars, length),
+  Total_NA = sapply(categorical_vars, function(x) sum(is.na(x)))
+)
+
+# Crear resumen para variables numéricas
+summary_num <- data.frame(
+  Variable = names(numeric_vars),
+  Tipo = "Numérica",
+  Total_Valores = sapply(numeric_vars, length),
+  Total_NA = sapply(numeric_vars, function(x) sum(is.na(x)))
+)
+
+# Unir ambos resúmenes
+summary_df <- rbind(summary_cat, summary_num)
+
+# Mostrar resultado
+print(summary_df)
+```
+
+
+### La variable que vamos a usar
+
+```{r}
+dataset$peso_total_g <- dataset$peso_total_lb * 453.592
+
+```
+
 ### Modelo de Random Forest de Clasificación Balanceado...
 
 ```{r}
@@ -207,6 +381,69 @@ print(conf_matrix)
 
 # 🔍 Importancia
 varImpPlot(modelo_rf_pca)
+
+```
+
+
+```{r}
+
+# 📥 Cargar y preparar
+load("Nacimientos_Data_Final.RData")
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas))
+
+# 🎯 Variable binaria de bajo peso
+dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+
+# 📊 División de datos (80/20)
+library(caTools)
+set.seed(123)
+split <- sample.split(dataset_final$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+# 📦 Cargar librerías
+library(caret)
+library(randomForest)
+library(e1071)
+
+# 📋 Definir grid de hiperparámetros
+tune_grid <- expand.grid(
+  mtry = c(2, 3, 4, 5)
+)
+
+# ⚙ Control de entrenamiento
+control <- trainControl(
+  method = "cv",           # Validación cruzada
+  number = 5,              # Número de folds
+  verboseIter = TRUE,
+  classProbs = TRUE,
+  sampling = "down"        # Balanceo interno (undersampling)
+)
+
+# 🔧 Entrenar modelo con tuneo
+set.seed(123)
+modelo_rf_tuneado <- train(
+  peso_binario ~ Edadm + Sexo + Tipar + Asisrec + Tohite,
+  data = train_set,
+  method = "rf",
+  trControl = control,
+  tuneGrid = tune_grid,
+  ntree = 100,
+  importance = TRUE,
+  sampsize = c(Bajo = 10000, NoBajo = 10000)
+)
+
+# 📊 Resultados del tuneo
+print(modelo_rf_tuneado)
+plot(modelo_rf_tuneado)
+
+# 🔮 Predicción
+pred_rf_tuned <- predict(modelo_rf_tuneado, newdata = test_set)
+
+# 📏 Evaluación
+conf_tuned <- confusionMatrix(pred_rf_tuned, test_set$peso_binario, positive = "Bajo")
+print(conf_tuned)
 
 ```
 
