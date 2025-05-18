@@ -334,8 +334,8 @@ load("Nacimientos_Data_Final.RData")
 # Crear variable de clase múltiple según rangos médicos
 dataset_final$peso_categoria <- cut(
   dataset_final$peso_total_g,
-  breaks = c(-Inf, 1000, 1500, 2500, 4000, Inf),
-  labels = c("Extremadamente_bajo", "Muy_bajo", "Bajo", "Normal", "Macrosomico"),
+  breaks = c(1500, 2500, 4000, Inf),
+  labels = c("Bajo", "Normal", "Macrosomico"),
   right = FALSE
 )
 
@@ -382,5 +382,192 @@ for (clase in levels(test_set$peso_categoria)) {
 }
 par(mfrow = c(1, 1))  # Restaurar layout
 ```
+
+
+
+
+
+
+## Modelo Tuneado
+
+```{r}
+# Cargar librerías
+library(e1071)
+library(caTools)
+library(caret)
+library(pROC)
+
+# Cargar datos
+load("Nacimientos_Data_Final.RData")
+
+# Crear variable de clase múltiple según rangos médicos
+dataset_final$peso_categoria <- cut(
+  dataset_final$peso_total_g,
+  breaks = c(1500, 2500, 4000, Inf),
+  labels = c("Bajo", "Normal", "Macrosomico"),
+  right = FALSE
+)
+dataset_final$peso_categoria <- as.factor(dataset_final$peso_categoria)
+
+# Seleccionar variables predictoras
+variables_modelo <- c("Tohivi", "Tohite", "Edadm", "Edadp",
+                      "Tipar", "Asisrec", "Sexo", "Depocu", "peso_categoria")
+dataset_sub <- dataset_final[, variables_modelo]
+
+# Asegurar que las categóricas sean factores
+cat_vars <- c("Tipar", "Asisrec", "Sexo", "Depocu")
+dataset_sub[cat_vars] <- lapply(dataset_sub[cat_vars], as.factor)
+
+# Dividir datos
+set.seed(123)
+split <- sample.split(dataset_sub$peso_categoria, SplitRatio = 0.8)
+train_set <- subset(dataset_sub, split == TRUE)
+test_set  <- subset(dataset_sub, split == FALSE)
+
+# Crear grid de hiperparámetros para Naive Bayes
+param_grid <- expand.grid(
+  laplace = c(0, 0.5, 1, 2),
+  usekernel = c(TRUE, FALSE)
+)
+
+# Almacenar resultados
+results <- data.frame()
+
+# Evaluar cada combinación de parámetros
+cat("Evaluando combinaciones de hiperparámetros:\n")
+for(i in 1:nrow(param_grid)) {
+  # Extraer parámetros
+  laplace_val <- param_grid$laplace[i]
+  usekernel_val <- param_grid$usekernel[i]
+  
+  # Entrenar modelo
+  modelo_nb <- naiveBayes(
+    peso_categoria ~ ., 
+    data = train_set, 
+    laplace = laplace_val,
+    usekernel = usekernel_val
+  )
+  
+  # Predicción en validación
+  pred <- predict(modelo_nb, newdata = test_set)
+  
+  # Evaluar con métricas
+  cm <- confusionMatrix(pred, test_set$peso_categoria)
+  
+  # Almacenar resultados
+  result_row <- data.frame(
+    laplace = laplace_val,
+    usekernel = usekernel_val,
+    accuracy = cm$overall["Accuracy"],
+    kappa = cm$overall["Kappa"],
+    balanced_accuracy = mean(cm$byClass[, "Balanced Accuracy"])
+  )
+  
+  results <- rbind(results, result_row)
+  
+  cat(sprintf("Parámetros: laplace=%s, usekernel=%s, Accuracy=%.4f, Kappa=%.4f\n", 
+              laplace_val, usekernel_val, cm$overall["Accuracy"], cm$overall["Kappa"]))
+}
+
+# Mostrar resultados ordenados por accuracy
+cat("\nResultados ordenados por Accuracy:\n")
+results_sorted <- results[order(-results$accuracy), ]
+print(results_sorted)
+
+# Seleccionar los mejores parámetros
+best_params <- results_sorted[1, c("laplace", "usekernel")]
+cat("\nMejores parámetros encontrados:\n")
+print(best_params)
+
+# Entrenar modelo final con los mejores parámetros
+cat("\nEntrenando modelo final con los mejores parámetros...\n")
+modelo_nb_final <- naiveBayes(
+  peso_categoria ~ ., 
+  data = train_set, 
+  laplace = best_params$laplace,
+  usekernel = best_params$usekernel
+)
+
+# Predicciones del modelo final
+predicciones <- predict(modelo_nb_final, newdata = test_set)
+
+# Evaluar modelo final
+cat("\nMatriz de Confusión del modelo final:\n")
+print(table(Predicted = predicciones, Actual = test_set$peso_categoria))
+
+cat("\nMétricas de clasificación del modelo final:\n")
+cm_final <- confusionMatrix(predicciones, test_set$peso_categoria)
+print(cm_final)
+
+# ROC para cada clase (one-vs-rest)
+prob_multi <- predict(modelo_nb_final, newdata = test_set, type = "raw")
+
+# Configurar visualización
+par(mfrow = c(2, 2))
+
+# Dibujar ROC por clase
+auc_values <- c()
+for (clase in levels(test_set$peso_categoria)) {
+  binaria <- as.numeric(test_set$peso_categoria == clase)
+  roc_clase <- roc(binaria, prob_multi[, clase])
+  auc_val <- auc(roc_clase)
+  auc_values <- c(auc_values, auc_val)
+  
+  plot(
+    roc_clase, 
+    main = paste("ROC -", clase), 
+    col = "#2C3E50", 
+    lwd = 2,
+    print.auc = TRUE
+  )
+}
+
+# Restaurar layout
+par(mfrow = c(1, 1))
+
+# Mostrar AUC promedio
+cat("\nAUC por clase:\n")
+names(auc_values) <- levels(test_set$peso_categoria)
+print(auc_values)
+cat(sprintf("AUC promedio: %.4f\n", mean(auc_values)))
+
+# Visualizar importancia de variables (mediante desviación estándar en distribuciones)
+# Esta es una aproximación simple para Naive Bayes
+nb_tables <- modelo_nb_final$tables
+var_importance <- data.frame(Variable = character(), Importance = numeric())
+
+for (var_name in names(nb_tables)) {
+  if (is.numeric(train_set[[var_name]])) {
+    # Para variables numéricas, usar la diferencia de medias entre clases
+    means <- nb_tables[[var_name]][1, ]
+    max_diff <- max(means) - min(means)
+    var_importance <- rbind(var_importance, data.frame(Variable = var_name, Importance = max_diff))
+  } else {
+    # Para categóricas, usar la variación en probabilidades
+    probs <- nb_tables[[var_name]]
+    var_imp <- mean(apply(probs, 1, function(x) max(x) - min(x)))
+    var_importance <- rbind(var_importance, data.frame(Variable = var_name, Importance = var_imp))
+  }
+}
+
+# Ordenar por importancia
+var_importance <- var_importance[order(-var_importance$Importance), ]
+
+# Visualizar importancia de variables
+cat("\nImportancia aproximada de variables:\n")
+print(var_importance)
+
+# Gráfico de barras de importancia de variables
+barplot(
+  var_importance$Importance,
+  names.arg = var_importance$Variable,
+  main = "Importancia aproximada de variables",
+  col = "steelblue",
+  las = 2,
+  cex.names = 0.7
+)
+```
+
+
 
 
