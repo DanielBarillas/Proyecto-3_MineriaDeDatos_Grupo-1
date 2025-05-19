@@ -26,8 +26,6 @@ Para este análisis se utilizaron los registros de nacimientos publicados por el
 Cada archivo contiene datos individuales de nacimientos ocurridos en el país, con variables sobre el menor, la madre, el padre y condiciones del nacimiento.
 
 
-Perfecto, aquí tienes una versión más desarrollada, explicativa y detallada de la sección **"Variable Respuesta"**, ideal para incluir en tu informe en RMarkdown o HTML:
-
 ## 1. Especificación de la Variable Respuesta
 
 **1. Variable seleccionada: `Peso_total_lb`**
