@@ -644,4 +644,105 @@ cat(sprintf("AUC: %.4f\n", auc(roc_obj)))
 
 
 
+```{r}
+# Cargar librerías necesarias
+library(e1071)
+library(caTools)
+library(caret)
+library(pROC)
+
+# Cargar y preparar los datos
+load("Nacimientos_Data_Final.RData")
+if (!"peso_binario" %in% names(dataset_final)) {
+  dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+  dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+}
+
+# Subconjunto final con numéricas y categóricas
+variables_todas <- c("Tohivi", "Tohite", "Tipar", "Asisrec", "Sexo", "Depocu", "peso_binario", "Depreg", "Deprem", "Deprep")
+dataset_sub <- dataset_final[, variables_todas]
+
+# Convertir variables categóricas a factor (incluyendo Depreg y Depregm)
+cat_vars <- c("Tipar", "Asisrec", "Sexo", "Depocu", "Depreg", "Deprem", "Deprep")
+dataset_sub[cat_vars] <- lapply(dataset_sub[cat_vars], as.factor)
+
+# División en entrenamiento y prueba
+set.seed(123)
+split <- sample.split(dataset_sub$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_sub, split == TRUE)
+test_set  <- subset(dataset_sub, split == FALSE)
+
+# Balanceo por undersampling de la clase mayoritaria
+set.seed(123)
+bajo_train <- subset(train_set, peso_binario == "Bajo")
+no_bajo_train <- subset(train_set, peso_binario == "NoBajo")
+n_bajo <- nrow(bajo_train)
+no_bajo_train_down <- no_bajo_train[sample(1:nrow(no_bajo_train), n_bajo), ]
+train_balanced <- rbind(bajo_train, no_bajo_train_down)
+
+# Verificar balance
+cat("Distribución clases en train_balanced:\n")
+print(table(train_balanced$peso_binario))
+print(prop.table(table(train_balanced$peso_binario)))
+
+# Separar variables numéricas para PCA
+variables_numericas <- c("Tohivi", "Tohite")
+
+# Realizar PCA
+cat("\nAplicando PCA a las variables numéricas...\n")
+pca_result <- prcomp(train_balanced[, variables_numericas], center = TRUE, scale. = TRUE)
+
+# Resumen del PCA
+print(summary(pca_result))
+plot(pca_result, type = "l", main = "Scree Plot")
+print(pca_result$rotation)
+
+# Varianza explicada
+var_explained <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+cum_var_explained <- cumsum(var_explained)
+cat("\nVarianza acumulada explicada por componente:\n")
+print(cum_var_explained)
+
+# Número de componentes a usar
+n_componentes <- which(cum_var_explained >= 0.9)[1]
+cat("\nUtilizando", n_componentes, "componentes principales\n")
+
+# Transformar datos de entrenamiento
+pca_train <- predict(pca_result, train_balanced[, variables_numericas])
+pca_train <- pca_train[, 1:n_componentes]
+
+# Combinar con variables categóricas
+train_pca <- data.frame(
+  pca_train,
+  train_balanced[, cat_vars],
+  peso_binario = train_balanced$peso_binario
+)
+
+# Transformar datos de prueba
+pca_test <- predict(pca_result, test_set[, variables_numericas])
+pca_test <- pca_test[, 1:n_componentes]
+
+# Combinar con variables categóricas
+test_pca <- data.frame(
+  pca_test,
+  test_set[, cat_vars],
+  peso_binario = test_set$peso_binario
+)
+
+# Modelo Naive Bayes con PCA
+modelo_nb_pca <- naiveBayes(peso_binario ~ ., data = train_pca)
+
+# Predicción y evaluación
+predicciones_pca <- predict(modelo_nb_pca, newdata = test_pca)
+cat("\nMatriz de Confusión - Modelo con PCA:\n")
+print(table(Predicted = predicciones_pca, Actual = test_set$peso_binario))
+cat("\nMétricas del modelo con PCA:\n")
+cm_pca <- confusionMatrix(predicciones_pca, test_set$peso_binario, positive = "Bajo")
+print(cm_pca)
+
+
+
+
+```
+
 
