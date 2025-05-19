@@ -270,6 +270,7 @@ roc_obj <- roc(test_set$peso_binario, prob, levels = c("NoBajo", "Bajo"))
 plot(roc_obj, col = "#F39C12", lwd = 2, main = "Curva ROC - Naive Bayes (Numéricas)")
 cat(sprintf("AUC: %.4f\n", auc(roc_obj)))
 ```
+
 ### Naive Bayes con solo dos tipos de clases para el peso del bebé...
 
 ```{r}
@@ -383,10 +384,83 @@ for (clase in levels(test_set$peso_categoria)) {
 par(mfrow = c(1, 1))  # Restaurar layout
 ```
 
+### 3 modelos de regresión lineal + evaluación
 
+```{r}
+# Cargar librerías
+library(dplyr)
+library(caret)
+library(Metrics)
 
+# Cargar datos
+load("Nacimientos_Data_Final.RData")
 
+# Asegurar que las categóricas estén como factores
+dataset_final$Sexo <- as.factor(dataset_final$Sexo)
+dataset_final$Asisrec <- as.factor(dataset_final$Asisrec)
+dataset_final$Tipar <- as.factor(dataset_final$Tipar)
+dataset_final$Depocu <- as.factor(dataset_final$Depocu)
 
+# Eliminar filas con NA en variables usadas
+dataset_modelo <- dataset_final %>%
+  select(peso_total_g, Tohivi, Tohite, Edadm, Edadp, Sexo, Asisrec, Tipar, Depocu) %>%
+  na.omit()
+
+# Dividir en entrenamiento y prueba (80/20)
+set.seed(123)
+split <- createDataPartition(dataset_modelo$peso_total_g, p = 0.8, list = FALSE)
+train_data <- dataset_modelo[split, ]
+test_data  <- dataset_modelo[-split, ]
+
+# Modelo 1: Solo variables numéricas
+modelo_lm1 <- lm(peso_total_g ~ Tohivi + Tohite + Edadm + Edadp, data = train_data)
+
+# Modelo 2: Numéricas + Sexo + Asistencia
+modelo_lm2 <- lm(peso_total_g ~ Tohivi + Tohite + Edadm + Edadp + Sexo + Asisrec, data = train_data)
+
+# Modelo 3: Todos los predictores
+modelo_lm3 <- lm(peso_total_g ~ Tohivi + Tohite + Edadm + Edadp + Sexo + Asisrec + Tipar + Depocu, data = train_data)
+
+# Mostrar resúmenes
+cat("\nResumen Modelo 1:\n")
+print(summary(modelo_lm1))
+cat("\nResumen Modelo 2:\n")
+print(summary(modelo_lm2))
+cat("\nResumen Modelo 3:\n")
+print(summary(modelo_lm3))
+
+# R² ajustado
+cat("\nR² ajustado:\n")
+cat(sprintf("Modelo 1: %.4f\n", summary(modelo_lm1)$adj.r.squared))
+cat(sprintf("Modelo 2: %.4f\n", summary(modelo_lm2)$adj.r.squared))
+cat(sprintf("Modelo 3: %.4f\n", summary(modelo_lm3)$adj.r.squared))
+
+# Función de evaluación
+evaluar_modelo <- function(modelo, test_data, nombre) {
+  pred <- predict(modelo, newdata = test_data)
+  real <- test_data$peso_total_g
+  cat(paste0("\n📊 Métricas para ", nombre, ":\n"))
+  cat(sprintf("MAE  = %.2f\n", mae(real, pred)))
+  cat(sprintf("RMSE = %.2f\n", rmse(real, pred)))
+  cat(sprintf("MAPE = %.2f%%\n", mape(real, pred) * 100))
+  return(invisible(pred))
+}
+
+# Evaluar modelos
+pred1 <- evaluar_modelo(modelo_lm1, test_data, "Modelo 1")
+pred2 <- evaluar_modelo(modelo_lm2, test_data, "Modelo 2")
+pred3 <- evaluar_modelo(modelo_lm3, test_data, "Modelo 3")
+
+# Graficar residuos
+par(mfrow = c(1, 3))
+plot(pred1 - test_data$peso_total_g, main = "Residuos Modelo 1", col = "blue", ylab = "Residuos", xlab = "Índice")
+abline(h = 0, col = "gray")
+plot(pred2 - test_data$peso_total_g, main = "Residuos Modelo 2", col = "green", ylab = "Residuos", xlab = "Índice")
+abline(h = 0, col = "gray")
+plot(pred3 - test_data$peso_total_g, main = "Residuos Modelo 3", col = "red", ylab = "Residuos", xlab = "Índice")
+abline(h = 0, col = "gray")
+par(mfrow = c(1, 1))
+```
 
 ## Modelo Tuneado
 
