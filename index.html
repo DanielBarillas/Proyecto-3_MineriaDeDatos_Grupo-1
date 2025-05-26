@@ -150,37 +150,67 @@
                         <li>Identificar variables influyentes en el contexto guatemalteco</li>
                     </ul>
                     
-                    <h2>Metodología</h2>
+                    <h2>Materiales y Metodos</h2>
                     <h3>Datos</h3>
                     <p>5+ millones de registros del INE (2009-2022) con variables demográficas, clínicas y socioeconómicas.</p>
                     
                     <h3>Preprocesamiento</h3>
                     <ul>
-                        <li>Limpieza de datos e imputación de valores faltantes</li>
+                        <li>Limpieza de datos e imputación de valores faltantes se eliminaron variables como (Mupnam, Añoocu, Asisrec)</li>
                         <li>Balanceo con SMOTE</li>
                         <li>Reducción de dimensionalidad con PCA</li>
+                        <li>Ecoding con One Hot para las variables categoricas</li>
+                        <li>Division de los datos en 80% entrenamiento y 20% de testeo</li>
+                     
+                    </ul>
+                    <h3>Materiales</h3>
+                    <p>Necesitas una computadora con lo siguientes requisitos minimos si se quiere ejecutar el modelo:</p>
+                    <ul>
+                        <li>Intel Core I5 de 10 generacion</li>
+                        <li>Memoria Ram de 32 GB</li>
+                        <li>Tarjeta gráfica integrada: Intel(R) UHD Graphics (128 MB).</li>
+                        <li>Sistema Operativo Windows 10</li>
+                     
                     </ul>
                 </div>
                 
                 <div class="column">
                     <h2>Resultados Clave</h2>
+                   <div style="text-align: center;">
+                    <p><em>Hola mundo</em></p>
+                    </div>
+
                     <table class="results-table">
                         <tr>
                             <th>Modelo</th>
                             <th>Accuracy</th>
                             <th>Sensibilidad</th>
+                            <th>Presicion</th>
+                            <th>RMSE</th>
                             <th>AUC</th>
                         </tr>
                         <tr>
                             <td>Naive Bayes Multiclase</td>
                             <td>29.0%</td>
                             <td>65.1%</td>
+                            <td>61.87%</td>
+                            <td>-</td>
                             <td>-</td>
                         </tr>
                         <tr>
-                            <td>Naive Bayes Binario</td>
+                            <td>Naive Bayes Binario con PCA</td>
                             <td>56.3%</td>
                             <td>62.4%</td>
+                            <td>69%</td>
+                            <td>-</td>
+                            <td>0.58</td>
+                        </tr>
+                        <tr>
+                            <td>Naive Bayes Binario sin Balanceo</td>
+                            <td>88.67%</td>
+                            <td>6.5%</td>
+                            <td>74.46%</td>
+                            <td>-</td>
                             <td>0.58</td>
                         </tr>
                         <tr>
@@ -202,6 +232,7 @@
                             <td>0.58</td>
                         </tr>
                     </table>
+                    <h2>Discusion</h2>
                     
                     <h2>Conclusiones</h2>
                     <ul>
