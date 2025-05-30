@@ -1,6 +1,5 @@
 ---
-title: "Proyecto 3 - Predicción del Bajo Peso al Nacer"
-output: html_document
+"Proyecto 3 - Predicción del Bajo Peso al Nacer"
 ---
 
 ## 📁 Estructura del Proyecto
