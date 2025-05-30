@@ -202,7 +202,7 @@
         }
         
        .results-table {
-        font-size: 10px; /* tamaño de fuente reducido */
+        font-size: 13px; /* tamaño de fuente reducido */
         border-collapse: collapse;
         width: 100%;
     }
@@ -305,6 +305,16 @@
             height: 60px;
             opacity: 0.9;
         }
+
+          .referencias a {
+        color: #72ce78;
+        text-decoration: none;
+    }
+
+    .referencias a:hover {
+        text-decoration: underline;
+        color: #76e07e;
+    }
         
         @media (max-width: 768px) {
             .poster {
@@ -337,13 +347,15 @@
                 <h1>Predicción del Bajo Peso al Nacer en Guatemala con Modelos de Regresion y Clasificacion </h1>
                 <div class="subtitle">Un enfoque de minería de datos para la salud pública</div>
                 <div class="authors">Mathew Cordero Aquino & Pablo Daniel Barillas Moreno</div>
-                <div class="contact">UniversidadEl mejor  del Valle de Guatemala | Facultad de Ingeniería</div>
+                <div class="contact">Universidad del Valle de Guatemala | Facultad de Ingeniería</div>
                 <div class="corresponding">Autor de correspondencia: bar22193@uvg.edu.gt</div>
             </header>
             
             <section class="intro">
                 <h2>Introducción</h2>
-                <p>El bajo peso al nacer (BPN, &lt;2500g) afecta al <strong>12% de los nacimientos</strong> en Guatemala (INE, 2022), con mayor prevalencia en áreas rurales e indígenas. La OMS busca reducir los casos en <strong>30% para 2025</strong>.</p>
+                <p>El bajo peso al nacer (BPN, &lt;2500g) afecta al <strong>12% de los nacimientos</strong> en Guatemala (INE, 2022), con mayor prevalencia en áreas rurales e indígenas. La OMS busca reducir los casos en <strong>30% para 2025</strong>.
+                    
+                    </p><p>El objetivo de este estudio es desarrollar modelos predictivos de clasificación binaria y multiclase, evaluar el rendimiento de diferentes algoritmos de machine learning, identificar variables clave asociadas al bajo peso al nacer (BPN) en Guatemala y proponer herramientas que puedan contribuir a la formulación de políticas de salud materno-infantil.</p>
                 
                 <div class="highlight-box">
                     <h3>Resumen</h3>
@@ -470,7 +482,17 @@
             <footer class="footer">
                 <p><strong>Agradecimientos:</strong> Universidad del Valle de Guatemala, Instituto Nacional de Estadística (INE), Dra. Lynette García</p>
                 <p><strong>Contacto:</strong> bar22193@uvg.edu.gt | Datos disponibles en: https://www.ine.gob.gt</p>
-                <p><strong>Referencias:</strong> OMS (2014), INE Guatemala (2024), Reveal (2023)</p>
+              <div class="referencias">
+    <p><strong>Referencias:</strong></p>
+    <ul>
+        <li>Organización Mundial de la Salud. (2014). <em>Metas mundiales de nutrición 2025: documento normativo sobre bajo peso al nacer</em>. Recuperado de <a href="https://www.who.int/es/publications/i/item/WHO-NMH-NHD-14.5" target="_blank">https://www.who.int/es/publications/i/item/WHO-NMH-NHD-14.5</a></li>
+        
+        <li>Instituto Nacional de Estadística de Guatemala. (2024). <em>Informe de Situación de la Niñez y Adolescencia en Guatemala 2022-2024</em>. Recuperado de <a href="https://www.odhag.org.gt/wordpress/wp-content/uploads/2025/05/InformeNinez2022-2024.pdf" target="_blank">https://www.odhag.org.gt/wordpress/wp-content/uploads/2025/05/InformeNinez2022-2024.pdf</a></li>
+        
+        <li>Reveal. (2023). <em>Predictive Analytics in Healthcare</em>. Recuperado de <a href="https://www.revealbi.io/blog/predictive-analytics-in-healthcare" target="_blank">https://www.revealbi.io/blog/predictive-analytics-in-healthcare</a></li>
+    </ul>
+</div>
+
             </footer>
         </div>
     </div>
