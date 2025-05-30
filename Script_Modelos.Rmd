@@ -1,0 +1,746 @@
+---
+title: "Proyecto3_Modelación_EntregaFinal"
+author: 
+  - "Pablo Daniel Barillas Moreno, Carné No. 22193"
+  - "Mathew Cordero Aquino, Carné No. 22982"
+output:
+  html_document: default
+  pdf_document:
+    latex_engine: xelatex
+date: "2025-03-14"
+header-includes:
+   - \usepackage{fvextra}
+   - \DefineVerbatimEnvironment{Highlighting}{Verbatim}{breaklines,commandchars=\\\{\}}
+repository: "https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1/tree/Proyecto-3.-Modelaci%C3%B3n"
+---
+
+## Enlace al Repositorio del proyecto 3 - Entrega 1 de minería de datos del Grupo #1
+[Repositorio en GitHub](https://github.com/DanielBarillas/Proyecto-3_MineriaDeDatos_Grupo-1/tree/Proyecto-3.-Modelaci%C3%B3n)
+
+## 0. Descargar los conjuntos de datos.
+
+Para este punto ya se descargo el .sav (formato SPSS) de año por año de la página [Instituto Nacional de Estadística - Guatemala](https://www.ine.gob.gt/vitales/), de nacimiento de bebes del país (Guatemala), para su posterior análisis.
+
+Para este análisis se utilizaron los registros de nacimientos publicados por el Instituto Nacional de Estadística (INE) desde el año 2009 hasta 2022, en formato .sav (SPSS). En total, se procesaron 14 archivos, cada uno correspondiente a un año.
+
+Cada archivo contiene datos individuales de nacimientos ocurridos en el país, con variables sobre el menor, la madre, el padre y condiciones del nacimiento.
+
+
+## 1. Especificación de la Variable Respuesta
+
+**1. Variable seleccionada: `Peso_total_lb`**
+
+La variable respuesta definida para este proyecto es **`Peso_total_lb`**, la cual representa el **peso total del recién nacido** al momento de su nacimiento, expresado inicialmente en libras. Esta variable no existe de forma directa en los archivos originales, sino que fue construida a partir de dos columnas: `Libras` y `Onzas`, que registran de forma separada el peso del bebé.
+
+Para convertir estas dos variables en una sola métrica unificada y continua, se empleó la siguiente fórmula:
+
+$$
+\text{Peso\_total\_lb} = \text{Libras} + \frac{\text{Onzas}}{16}
+$$
+
+Este paso permitió generar una única medida que captura el peso con precisión decimal, haciendo más fácil su análisis y comparación.
+
+**2. Conversión a unidad médica estándar: gramos (`Peso_g`)**
+
+Dado que la unidad libra no es la más común en entornos médicos y científicos, se optó por **transformar `Peso_total_lb` a gramos**, siguiendo la recomendación de la Organización Mundial de la Salud (OMS) y otras entidades internacionales, que establecen al **gramo como unidad estándar para evaluar el peso al nacer**. La conversión se realiza con la siguiente fórmula:
+
+$$
+\text{Peso\_g} = \text{Peso\_total\_lb} \times 453.59237
+$$
+
+Esto facilita no solo la interpretación médica de los resultados (por ejemplo, la detección de bajo peso al nacer: < 2500g), sino también la comparación directa con literatura científica y estándares clínicos reconocidos.
+
+**3. Tipo de variable**
+
+La variable `Peso_total_lb`, y su versión transformada `Peso_g`, son **variables cuantitativas continuas**. Esto significa que pueden asumir **valores numéricos dentro de un rango definido**, incluyendo valores decimales. Este tipo de variables permiten aplicar un amplio rango de análisis estadísticos y modelos de aprendizaje de máquina, como regresión, clustering o árboles de decisión.
+
+Además, al ser continua, la variable no se agrupa en categorías discretas, lo que es particularmente útil para evaluar diferencias sutiles en peso entre grupos, como madres adolescentes versus adultas.
+
+**4. Justificación de la elección como variable respuesta**
+
+La elección de `Peso_total_lb` como variable respuesta está motivada tanto por **razones clínicas como sociales y estadísticas**. Según diversos estudios en salud pública, el **peso al nacer es un indicador fundamental del estado de salud neonatal**, y se ha demostrado que se ve influenciado por múltiples factores maternos como:
+
+* Edad de la madre,
+* Estado nutricional antes y durante el embarazo,
+* Acceso a servicios de salud prenatal,
+* Nivel educativo,
+* Condiciones socioeconómicas y geográficas.
+
+En particular, el **embarazo adolescente** está asociado con una mayor probabilidad de bajo peso al nacer, debido a que el cuerpo de la madre adolescente aún está en desarrollo y puede no estar preparado fisiológicamente para sostener un embarazo saludable. Esta situación aumenta el riesgo de complicaciones perinatales como partos prematuros, infecciones, problemas de crecimiento y mortalidad neonatal.
+
+Por tanto, utilizar `Peso_total_lb` (y su transformación `Peso_g`) como variable respuesta permite evaluar cómo influyen los factores maternos y sociales en la salud del recién nacido, aportando evidencia para futuras estrategias de prevención e intervención.
+
+**5. Transformaciones adicionales para análisis**
+
+Antes de aplicar técnicas estadísticas y de minería de datos, se realizaron varias transformaciones clave sobre esta variable:
+
+* **Limpieza y filtrado**: se eliminaron registros con pesos fisiológicamente imposibles (menores a 500g o mayores a 6000g) para evitar sesgos o errores en el análisis.
+* **Estandarización (Z-score)**: para modelos sensibles a la escala como regresión lineal y clustering, se estandarizó la variable para tener media 0 y desviación estándar 1.
+* **Normalización (Min-Max)**: se utilizó en pruebas de algoritmos que requieren datos en rangos específicos, como `k-means`.
+
+**6. Conclusión**
+
+`Peso_total_lb`, transformada a gramos, es una variable clínicamente relevante, estadísticamente útil y socialmente significativa. Su uso como variable objetivo en este proyecto permite identificar factores de riesgo asociados a la maternidad en adolescentes y evaluar su impacto en la salud neonatal. A través de su análisis, se busca aportar evidencia concreta sobre cómo las condiciones maternas influyen directamente en el desarrollo del recién nacido, con la meta de promover políticas públicas de salud más efectivas.
+
+
+**Matriz de correlación entre la variable respuesta y las demás variables**
+
+```{r}
+# 📥 Cargar dataset
+load("Nacimientos_Data_Final.RData")
+
+# 🎯 Variable respuesta
+respuesta <- "peso_total_g"
+
+# 📋 Variables oficiales según descripción del proyecto
+variables_oficiales <- c(
+  "Depreg", "Mupreg", "Mesreg", "Añoreg", "Depocu", "Mupocu",
+  "Libras", "Onzas", "Diaocu", "Mesocu", "Añoocu", "Sexo", "Tipar", "Edadp",
+  "Deprep", "Muprep", "Escivp", "Depnap", "Mupnap", "Naciop", "Ocupap",
+  "Edadm", "Deprem", "Muprem", "Escivm", "Depnam", "Mupnam", "Naciom", "Ocupam",
+  "Escolap", "Escolam", "Paisrep", "Paisrem", "Paisnacp", "Paisnacm", "Asisrec",
+  "Sitioocu", "TipoIns", "ViaPar", "PuebloPP", "PuebloPM", "Tohite", "Tohinm",
+  "Tohivi", "grupetma", "Gretnp", "Gretnm", "Ciuopad", "Ciuomad", "Munpnam",
+  "archivo", "anio"
+)
+
+# ❗ Validar variables presentes en el dataset
+variables_usadas <- intersect(variables_oficiales, names(dataset_final))
+
+# 🔍 Clasificación forzada por nombre/tipo conocido
+numericas <- c("Libras", "Onzas", "Edadp", "Edadm", "Tohite", "Tohinm", "Tohivi", "anio")
+categoricas <- setdiff(variables_usadas, numericas)
+
+# 📊 Correlaciones con variables numéricas
+cor_num <- sapply(numericas, function(var) {
+  tryCatch(cor(dataset_final[[respuesta]], dataset_final[[var]], use = "complete.obs"),
+           error = function(e) NA)
+})
+
+# 📊 R² para variables categóricas
+r2_cat <- sapply(categoricas, function(var) {
+  tryCatch({
+    modelo <- lm(dataset_final[[respuesta]] ~ as.factor(dataset_final[[var]]))
+    summary(modelo)$r.squared
+  }, error = function(e) NA)
+})
+
+# 🧾 Unir y ordenar
+cor_total <- data.frame(
+  Variable = c(names(cor_num), names(r2_cat)),
+  Tipo = c(rep("Numérica", length(cor_num)), rep("Categórica", length(r2_cat))),
+  Relacion = as.numeric(c(cor_num, r2_cat))
+)
+
+# ✅ Eliminar NA y ordenar
+cor_total <- na.omit(cor_total)
+cor_total <- cor_total[order(abs(cor_total$Relacion), decreasing = TRUE), ]
+
+# 📋 Ver los más relacionados
+head(cor_total, 20)  # o usa View(cor_total) para ver todo
+```
+
+
+
+## Random Forest
+
+### Modelo 1 
+
+```{r}
+# Cargar datos
+load("Nacimientos_Data_Final.RData")
+
+# Crear variable binaria si no existe
+if (!"peso_binario" %in% names(dataset_final)) {
+  dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+  dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+}
+
+# Subconjunto de variables
+variables_modelo <- c("Tohivi", "Tohite", "Edadm", "Edadp", 
+                      "Tipar", "Asisrec", "Sexo", "Depocu", "peso_binario")
+dataset_sub <- dataset_final[, variables_modelo]
+
+# División en train/test
+set.seed(123)
+split <- sample.split(dataset_sub$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_sub, split == TRUE)
+test_set  <- subset(dataset_sub, split == FALSE)
+
+# Modelo Random Forest optimizado
+modelo_rf <- randomForest(
+  peso_binario ~ .,
+  data = train_set,
+  ntree = 30,
+  mtry = 3,
+  sampsize = c(Bajo = 5000, NoBajo = 5000),  # muestreo balanceado más liviano
+  importance = TRUE
+)
+
+# Evaluación
+predicciones <- predict(modelo_rf, newdata = test_set)
+cat("\nMatriz de Confusión:\n")
+print(table(Predicted = predicciones, Actual = test_set$peso_binario))
+cat("\nMétricas del modelo:\n")
+print(confusionMatrix(predicciones, test_set$peso_binario, positive = "Bajo"))
+
+# Importancia de variables
+varImpPlot(modelo_rf, main = "Importancia de Variables - Random Forest")
+
+# Curva ROC
+probabilidades <- predict(modelo_rf, newdata = test_set, type = "prob")[, "Bajo"]
+roc_obj <- roc(test_set$peso_binario, probabilidades, levels = c("NoBajo", "Bajo"))
+plot(roc_obj, col = "#2E86C1", lwd = 2, main = "Curva ROC - Random Forest")
+cat(sprintf("AUC: %.4f\n", auc(roc_obj)))
+
+# Curva de aprendizaje simplificada
+set_sizes <- c(0.2, 0.5, 0.8, 1.0)
+accuracy_train <- c()
+accuracy_test <- c()
+
+for (s in set_sizes) {
+  idx <- sample(1:nrow(train_set), size = floor(s * nrow(train_set)))
+  modelo_temp <- randomForest(peso_binario ~ ., data = train_set[idx, ], ntree = 15, mtry = 3)
+  pred_train <- predict(modelo_temp, newdata = train_set[idx, ])
+  pred_test  <- predict(modelo_temp, newdata = test_set)
+  
+  acc_train <- confusionMatrix(pred_train, train_set[idx, ]$peso_binario)$overall["Accuracy"]
+  acc_test  <- confusionMatrix(pred_test, test_set$peso_binario)$overall["Accuracy"]
+  
+  accuracy_train <- c(accuracy_train, acc_train)
+  accuracy_test <- c(accuracy_test, acc_test)
+}
+
+# Gráfico curva de aprendizaje
+df_acc <- data.frame(
+  SetSize = set_sizes * 100,
+  AccuracyTrain = accuracy_train,
+  AccuracyTest = accuracy_test
+)
+
+ggplot(df_acc, aes(x = SetSize)) +
+  geom_line(aes(y = AccuracyTrain, color = "Entrenamiento")) +
+  geom_line(aes(y = AccuracyTest, color = "Prueba")) +
+  labs(title = "Curva de Aprendizaje - Random Forest (Optimizada)",
+       x = "% de datos de entrenamiento",
+       y = "Exactitud") +
+  scale_color_manual(values = c("Entrenamiento" = "#28B463", "Prueba" = "#E74C3C")) +
+  theme_minimal()
+```
+
+
+
+### Modelo 2: Random Forest con PCA
+
+
+```{r}
+# 📥 Cargar los datos
+load("Nacimientos_Data_Final.RData")
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas))
+
+# 🎯 Crear variable binaria del bajo peso
+dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+
+# 🧹 Seleccionar variables numéricas para PCA
+pca_vars <- dataset_final[, c("Edadm", "Tohite")]
+
+# 🧪 Escalar y aplicar PCA
+pca_result <- prcomp(pca_vars, center = TRUE, scale. = TRUE)
+summary(pca_result)  # Para ver cuánta varianza explica cada componente
+
+# 📦 Agregar los primeros 2 componentes principales al dataset
+dataset_final$PC1 <- pca_result$x[,1]
+dataset_final$PC2 <- pca_result$x[,2]
+
+# 📊 División
+library(caTools)
+set.seed(123)
+split <- sample.split(dataset_final$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+# 🌲 Random Forest con PCA
+library(randomForest)
+set.seed(123)
+modelo_rf_pca <- randomForest(
+  peso_binario ~ PC1 + PC2 + Sexo + Tipar + Asisrec,
+  data = train_set,
+  ntree = 100,
+  mtry = 3,
+  sampsize = c(Bajo = 10000, NoBajo = 10000),
+  importance = TRUE
+)
+
+# 🔮 Predicción
+pred_rf_pca <- predict(modelo_rf_pca, newdata = test_set)
+
+# 📏 Evaluación
+library(caret)
+library(e1071)
+conf_matrix <- confusionMatrix(pred_rf_pca, test_set$peso_binario, positive = "Bajo")
+print(conf_matrix)
+
+# 🔍 Importancia
+varImpPlot(modelo_rf_pca)
+
+```
+
+
+
+
+### Modelo 3: Random Forest con Validacion Cruzada
+
+```{r}
+# 📥 Cargar y preparar
+load("Nacimientos_Data_Final.RData")
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas, Peso_total_lb))
+
+# 🎯 Nueva variable binaria
+dataset_final$bajo_peso <- ifelse(dataset_final$peso_total_g < 2500, "Sí", "No")
+dataset_final$bajo_peso <- as.factor(dataset_final$bajo_peso)
+
+# 📊 División
+library(caTools)
+set.seed(123)
+split <- sample.split(dataset_final$bajo_peso, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+# 🌳 Árbol de Clasificación
+library(rpart)
+modelo_binario <- rpart(bajo_peso ~ Edadm + Sexo + Tipar + Asisrec + Tohite, 
+                        data = train_set, method = "class", control = rpart.control(cp = 0.01))
+
+# 🔮 Predicción
+pred_bin <- predict(modelo_binario, newdata = test_set, type = "class")
+
+# 📏 Métricas
+library(caret)
+conf_bin <- confusionMatrix(pred_bin, test_set$bajo_peso, positive = "Sí")
+print(conf_bin)
+`
+```{r}
+# 📥 Cargar y preparar
+load("Nacimientos_Data_Final.RData")
+dataset_final <- subset(dataset_final, select = -c(Libras, Onzas, Peso_Onzas))
+
+# 🎯 Variable binaria de bajo peso
+dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+
+# 📊 División de datos (80/20)
+library(caTools)
+set.seed(123)
+split <- sample.split(dataset_final$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_final, split == TRUE)
+test_set  <- subset(dataset_final, split == FALSE)
+
+# 🔢 Contar casos de clase minoritaria
+table(train_set$peso_binario)
+
+# 🌲 Modelo Random Forest balanceado
+library(randomForest)
+set.seed(123)
+modelo_rf_balanceado <- randomForest(
+  peso_binario ~ Edadm + Sexo + Tipar + Asisrec + Tohite,
+  data = train_set,
+  ntree = 100,
+  mtry = 3,
+  sampsize = c(Bajo = 10000, NoBajo = 10000),
+  importance = TRUE
+)
+
+# 🔮 Predicciones
+pred_rf_bin <- predict(modelo_rf_balanceado, newdata = test_set)
+
+# 📏 Matriz de Confusión personalizada
+conf_matrix <- table(Predicho = pred_rf_bin, Real = test_set$peso_binario)
+print(conf_matrix)
+
+# 📦 Métricas con caret
+library(caret)
+library(e1071)  # necesario para caret
+
+eval_metrics <- confusionMatrix(pred_rf_bin, test_set$peso_binario, positive = "Bajo")
+print(eval_metrics)
+
+# 📊 (Opcional) Visualización de importancia de variables
+# varImpPlot(modelo_rf_balanceado)
+```
+
+
+
+## Regresion Lineal
+
+```{r}
+# Cargar librerías
+library(dplyr)
+library(caret)
+library(Metrics)
+
+# Cargar datos
+load("Nacimientos_Data_Final.RData")
+
+# Asegurar que las categóricas estén como factores
+dataset_final$Sexo <- as.factor(dataset_final$Sexo)
+dataset_final$Asisrec <- as.factor(dataset_final$Asisrec)
+dataset_final$Tipar <- as.factor(dataset_final$Tipar)
+dataset_final$Depocu <- as.factor(dataset_final$Depocu)
+
+# Eliminar filas con NA en variables usadas
+dataset_modelo <- dataset_final %>%
+  select(peso_total_g, Tohivi, Tohite, Edadm, Edadp, Sexo, Asisrec, Tipar, Depocu) %>%
+  na.omit()
+
+# Dividir en entrenamiento y prueba (80/20)
+set.seed(123)
+split <- createDataPartition(dataset_modelo$peso_total_g, p = 0.8, list = FALSE)
+train_data <- dataset_modelo[split, ]
+test_data  <- dataset_modelo[-split, ]
+
+# Modelo 1: Solo variables numéricas
+modelo_lm1 <- lm(peso_total_g ~ Tohivi + Tohite + Edadm + Edadp, data = train_data)
+
+# Modelo 2: Numéricas + Sexo + Asistencia
+modelo_lm2 <- lm(peso_total_g ~ Tohivi + Tohite + Edadm + Edadp + Sexo + Asisrec, data = train_data)
+
+# Modelo 3: Todos los predictores
+modelo_lm3 <- lm(peso_total_g ~ Tohivi + Tohite + Edadm + Edadp + Sexo + Asisrec + Tipar + Depocu, data = train_data)
+
+# Mostrar resúmenes
+cat("\nResumen Modelo 1:\n")
+print(summary(modelo_lm1))
+cat("\nResumen Modelo 2:\n")
+print(summary(modelo_lm2))
+cat("\nResumen Modelo 3:\n")
+print(summary(modelo_lm3))
+
+# R² ajustado
+cat("\nR² ajustado:\n")
+cat(sprintf("Modelo 1: %.4f\n", summary(modelo_lm1)$adj.r.squared))
+cat(sprintf("Modelo 2: %.4f\n", summary(modelo_lm2)$adj.r.squared))
+cat(sprintf("Modelo 3: %.4f\n", summary(modelo_lm3)$adj.r.squared))
+
+# Función de evaluación
+evaluar_modelo <- function(modelo, test_data, nombre) {
+  pred <- predict(modelo, newdata = test_data)
+  real <- test_data$peso_total_g
+  cat(paste0("\n📊 Métricas para ", nombre, ":\n"))
+  cat(sprintf("MAE  = %.2f\n", mae(real, pred)))
+  cat(sprintf("RMSE = %.2f\n", rmse(real, pred)))
+  cat(sprintf("MAPE = %.2f%%\n", mape(real, pred) * 100))
+  return(invisible(pred))
+}
+
+# Evaluar modelos
+pred1 <- evaluar_modelo(modelo_lm1, test_data, "Modelo 1")
+pred2 <- evaluar_modelo(modelo_lm2, test_data, "Modelo 2")
+pred3 <- evaluar_modelo(modelo_lm3, test_data, "Modelo 3")
+
+# Graficar residuos
+par(mfrow = c(1, 3))
+plot(pred1 - test_data$peso_total_g, main = "Residuos Modelo 1", col = "blue", ylab = "Residuos", xlab = "Índice")
+abline(h = 0, col = "gray")
+plot(pred2 - test_data$peso_total_g, main = "Residuos Modelo 2", col = "green", ylab = "Residuos", xlab = "Índice")
+abline(h = 0, col = "gray")
+plot(pred3 - test_data$peso_total_g, main = "Residuos Modelo 3", col = "red", ylab = "Residuos", xlab = "Índice")
+abline(h = 0, col = "gray")
+par(mfrow = c(1, 1))
+
+
+```
+
+
+
+## Naive Bayes
+
+### Modelo 1 con 3 categorias
+
+```{r}
+# Cargar librerías
+library(e1071)
+library(caTools)
+library(caret)
+library(pROC)
+
+# Cargar datos
+load("Nacimientos_Data_Final.RData")
+
+# Crear variable de clase múltiple según rangos médicos
+dataset_final$peso_categoria <- cut(
+  dataset_final$peso_total_g,
+  breaks = c(1500, 2500, 4000, Inf),
+  labels = c("Bajo", "Normal", "Macrosomico"),
+  right = FALSE
+)
+
+dataset_final$peso_categoria <- as.factor(dataset_final$peso_categoria)
+
+# Seleccionar variables predictoras
+variables_modelo <- c("Tohivi", "Tohite", "Edadm", "Edadp",
+                      "Tipar", "Asisrec", "Sexo", "Depocu", "peso_categoria")
+dataset_sub <- dataset_final[, variables_modelo]
+
+# Asegurar que las categóricas sean factores
+cat_vars <- c("Tipar", "Asisrec", "Sexo", "Depocu")
+dataset_sub[cat_vars] <- lapply(dataset_sub[cat_vars], as.factor)
+
+# Dividir datos
+set.seed(123)
+split <- sample.split(dataset_sub$peso_categoria, SplitRatio = 0.8)
+train_set <- subset(dataset_sub, split == TRUE)
+test_set  <- subset(dataset_sub, split == FALSE)
+
+# Entrenar modelo Naive Bayes multiclase
+modelo_nb_multi <- naiveBayes(peso_categoria ~ ., data = train_set)
+
+# Predicción
+predicciones <- predict(modelo_nb_multi, newdata = test_set)
+
+# Evaluar
+cat("\nMatriz de Confusión:\n")
+print(table(Predicted = predicciones, Actual = test_set$peso_categoria))
+cat("\nMétricas de clasificación:\n")
+print(confusionMatrix(predicciones, test_set$peso_categoria))
+
+# ROC para cada clase (opcional)
+# Codificar una clase binaria por vez para AUC por clase
+prob_multi <- predict(modelo_nb_multi, newdata = test_set, type = "raw")
+
+# Dibujar ROC por clase
+par(mfrow = c(2, 3))
+for (clase in levels(test_set$peso_categoria)) {
+  binaria <- as.numeric(test_set$peso_categoria == clase)
+  roc_clase <- roc(binaria, prob_multi[, clase])
+  plot(roc_clase, main = paste("ROC -", clase), col = "#2C3E50", lwd = 2)
+  cat(sprintf("AUC (%s): %.4f\n", clase, auc(roc_clase)))
+}
+par(mfrow = c(1, 1))  # Restaurar layout
+```
+
+
+
+### Modelo 2 categoria binaria
+
+```{r}
+
+# Cargar librerías necesarias
+library(e1071)
+library(caTools)
+library(caret)
+library(pROC)
+
+# Cargar y preparar los datos
+load("Nacimientos_Data_Final.RData")
+
+if (!"peso_binario" %in% names(dataset_final)) {
+  dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 3000, "Bajo", "NoBajo")
+  dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+}
+
+# Subconjunto final con numéricas y categóricas
+variables_todas <- c("Tohivi", "Tohite", "Edadm", "Edadp",
+                     "Tipar", "Asisrec", "Sexo", "Depocu", "peso_binario")
+dataset_sub <- dataset_final[, variables_todas]
+
+# Asegurar que categóricas estén como factores
+cat_vars <- c("Tipar", "Asisrec", "Sexo", "Depocu")
+dataset_sub[cat_vars] <- lapply(dataset_sub[cat_vars], as.factor)
+
+# División en entrenamiento y prueba
+set.seed(123)
+split <- sample.split(dataset_sub$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_sub, split == TRUE)
+test_set  <- subset(dataset_sub, split == FALSE)
+
+# Balanceo por undersampling de la clase mayoritaria
+set.seed(123)
+bajo_train <- subset(train_set, peso_binario == "Bajo")
+no_bajo_train <- subset(train_set, peso_binario == "NoBajo")
+
+n_bajo <- nrow(bajo_train)
+
+no_bajo_train_down <- no_bajo_train[sample(1:nrow(no_bajo_train), n_bajo), ]
+
+train_balanced <- rbind(bajo_train, no_bajo_train_down)
+
+# Verificar balance
+cat("Distribución clases en train_balanced:\n")
+print(table(train_balanced$peso_binario))
+print(prop.table(table(train_balanced$peso_binario)))
+
+# Entrenar modelo Naive Bayes con conjunto balanceado
+modelo_nb_bal <- naiveBayes(peso_binario ~ ., data = train_balanced)
+
+# Predicción en conjunto test completo
+predicciones_bal <- predict(modelo_nb_bal, newdata = test_set)
+
+# Evaluación
+cat("\nMatriz de Confusión - Modelo Balanceado:\n")
+print(table(Predicted = predicciones_bal, Actual = test_set$peso_binario))
+
+cat("\nMétricas del modelo balanceado:\n")
+print(confusionMatrix(predicciones_bal, test_set$peso_binario, positive = "Bajo"))
+```
+
+
+### Modelo 3 categoria binaria sin balanceo
+
+
+```{r}
+library(e1071)
+library(caTools)
+library(caret)
+library(pROC)
+
+# Cargar datos
+load("Nacimientos_Data_Final.RData")
+
+# Crear variable peso_binario si no existe
+if (!"peso_binario" %in% names(dataset_final)) {
+  dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+  dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+}
+
+# Seleccionar variables
+variables_todas <- c("Tohivi", "Tohite", "Edadm", "Edadp",
+                     "Tipar", "Asisrec", "Sexo", "Depocu", "peso_binario")
+dataset_sub <- dataset_final[, variables_todas]
+
+# Asegurar factores para categóricas
+cat_vars <- c("Tipar", "Asisrec", "Sexo", "Depocu")
+dataset_sub[cat_vars] <- lapply(dataset_sub[cat_vars], as.factor)
+
+# División entrenamiento-prueba
+set.seed(123)
+split <- sample.split(dataset_sub$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_sub, split == TRUE)
+test_set  <- subset(dataset_sub, split == FALSE)
+
+# Entrenar modelo Naive Bayes
+modelo_nb <- naiveBayes(peso_binario ~ ., data = train_set)
+
+# Predecir en test
+predicciones <- predict(modelo_nb, newdata = test_set)
+
+# Evaluar con matriz de confusión y métricas
+cat("Matriz de Confusión:\n")
+print(table(Predicted = predicciones, Actual = test_set$peso_binario))
+
+cat("\nMétricas:\n")
+print(confusionMatrix(predicciones, test_set$peso_binario, positive = "Bajo"))
+
+# Curva ROC
+prob <- predict(modelo_nb, newdata = test_set, type = "raw")[, "Bajo"]
+roc_obj <- roc(test_set$peso_binario, prob, levels = c("NoBajo", "Bajo"))
+plot(roc_obj, col = "#2980B9", lwd = 2, main = "Curva ROC - Naive Bayes")
+cat(sprintf("AUC: %.4f\n", auc(roc_obj)))
+
+
+```
+
+
+
+```{r}
+# Cargar librerías necesarias
+library(e1071)
+library(caTools)
+library(caret)
+library(pROC)
+
+# Cargar y preparar los datos
+load("Nacimientos_Data_Final.RData")
+if (!"peso_binario" %in% names(dataset_final)) {
+  dataset_final$peso_binario <- ifelse(dataset_final$peso_total_g < 2500, "Bajo", "NoBajo")
+  dataset_final$peso_binario <- as.factor(dataset_final$peso_binario)
+}
+
+# Subconjunto final con numéricas y categóricas
+variables_todas <- c("Tohivi", "Tohite", "Tipar", "Asisrec", "Sexo", "Depocu", "peso_binario", "Depreg", "Deprem", "Deprep")
+dataset_sub <- dataset_final[, variables_todas]
+
+# Convertir variables categóricas a factor (incluyendo Depreg y Depregm)
+cat_vars <- c("Tipar", "Asisrec", "Sexo", "Depocu", "Depreg", "Deprem", "Deprep")
+dataset_sub[cat_vars] <- lapply(dataset_sub[cat_vars], as.factor)
+
+# División en entrenamiento y prueba
+set.seed(123)
+split <- sample.split(dataset_sub$peso_binario, SplitRatio = 0.8)
+train_set <- subset(dataset_sub, split == TRUE)
+test_set  <- subset(dataset_sub, split == FALSE)
+
+# Balanceo por undersampling de la clase mayoritaria
+set.seed(123)
+bajo_train <- subset(train_set, peso_binario == "Bajo")
+no_bajo_train <- subset(train_set, peso_binario == "NoBajo")
+n_bajo <- nrow(bajo_train)
+no_bajo_train_down <- no_bajo_train[sample(1:nrow(no_bajo_train), n_bajo), ]
+train_balanced <- rbind(bajo_train, no_bajo_train_down)
+
+# Verificar balance
+cat("Distribución clases en train_balanced:\n")
+print(table(train_balanced$peso_binario))
+print(prop.table(table(train_balanced$peso_binario)))
+
+# Separar variables numéricas para PCA
+variables_numericas <- c("Tohivi", "Tohite")
+
+# Realizar PCA
+cat("\nAplicando PCA a las variables numéricas...\n")
+pca_result <- prcomp(train_balanced[, variables_numericas], center = TRUE, scale. = TRUE)
+
+# Resumen del PCA
+print(summary(pca_result))
+plot(pca_result, type = "l", main = "Scree Plot")
+print(pca_result$rotation)
+
+# Varianza explicada
+var_explained <- pca_result$sdev^2 / sum(pca_result$sdev^2)
+cum_var_explained <- cumsum(var_explained)
+cat("\nVarianza acumulada explicada por componente:\n")
+print(cum_var_explained)
+
+# Número de componentes a usar
+n_componentes <- which(cum_var_explained >= 0.9)[1]
+cat("\nUtilizando", n_componentes, "componentes principales\n")
+
+# Transformar datos de entrenamiento
+pca_train <- predict(pca_result, train_balanced[, variables_numericas])
+pca_train <- pca_train[, 1:n_componentes]
+
+# Combinar con variables categóricas
+train_pca <- data.frame(
+  pca_train,
+  train_balanced[, cat_vars],
+  peso_binario = train_balanced$peso_binario
+)
+
+# Transformar datos de prueba
+pca_test <- predict(pca_result, test_set[, variables_numericas])
+pca_test <- pca_test[, 1:n_componentes]
+
+# Combinar con variables categóricas
+test_pca <- data.frame(
+  pca_test,
+  test_set[, cat_vars],
+  peso_binario = test_set$peso_binario
+)
+
+# Modelo Naive Bayes con PCA
+modelo_nb_pca <- naiveBayes(peso_binario ~ ., data = train_pca)
+
+# Predicción y evaluación
+predicciones_pca <- predict(modelo_nb_pca, newdata = test_pca)
+cat("\nMatriz de Confusión - Modelo con PCA:\n")
+print(table(Predicted = predicciones_pca, Actual = test_set$peso_binario))
+cat("\nMétricas del modelo con PCA:\n")
+cm_pca <- confusionMatrix(predicciones_pca, test_set$peso_binario, positive = "Bajo")
+print(cm_pca)
+
+
+
+
+```
+
+
